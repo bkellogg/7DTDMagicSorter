@@ -30,6 +30,8 @@ ms <command> [range]
 | `sort` | Sort items from [SortMe] into [Sort:X] containers |
 | `list` | List all recognized containers in range |
 | `preview` | Show what items would be sorted where (dry run) |
+| `scan` | Show items in [SortMe] grouped by category |
+| `missing` | Show categories that need containers created |
 
 - **range** (optional): Search radius in blocks. Default: 20
 
@@ -40,6 +42,8 @@ ms sort        # Sort items within 20 blocks
 ms sort 30     # Sort items within 30 blocks
 ms list        # List all containers in range
 ms preview     # Preview what would happen without moving items
+ms scan        # See what categories your items belong to
+ms missing     # See what [Sort:X] containers you need to create
 ```
 
 ## Naming Convention
@@ -137,7 +141,7 @@ The build automatically deploys to the game's Mods folder.
 ```
 MagicSorterMod.cs        - Mod entry point (IModApi)
 ConsoleCmdMagicSort.cs   - Console command handler (sort, list, preview)
-ContainerSorter.cs       - Main sorting logic
+ContainerManager.cs      - Container operations (sort, list, scan, etc.)
 ContainerWrapper.cs      - Abstraction for different container types
 ```
 

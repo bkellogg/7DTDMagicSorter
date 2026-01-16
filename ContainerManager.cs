@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace MagicSorter
 {
-    public class ContainerSorter
+    public class ContainerManager
     {
         private const string SortMeTag = "[SortMe]";
         private const string SortPrefix = "[Sort:";
@@ -18,7 +18,7 @@ namespace MagicSorter
         private readonly Dictionary<string, int> _sortedCounts = new Dictionary<string, int>();
         private int _failedCount;
 
-        public ContainerSorter(EntityPlayer player, int range)
+        public ContainerManager(EntityPlayer player, int range)
         {
             _player = player;
             _range = range;
@@ -92,6 +92,185 @@ namespace MagicSorter
             catch (Exception ex)
             {
                 Log.Error($"[MagicSorter] Unexpected error: {ex.Message}");
+            }
+        }
+
+        public void Scan()
+        {
+            try
+            {
+                ScanInternal();
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[MagicSorter] Unexpected error: {ex.Message}");
+            }
+        }
+
+        private void ScanInternal()
+        {
+            var containers = FindContainersInRange();
+            var sortMeContainer = FindSortMeContainer(containers);
+
+            if (sortMeContainer == null)
+            {
+                Log.Error("[MagicSorter] No [SortMe] container found in range.");
+                return;
+            }
+
+            var items = sortMeContainer.GetItems();
+            if (items == null)
+            {
+                Log.Error("[MagicSorter] Could not access items in [SortMe] container");
+                return;
+            }
+
+            // Group items by category
+            var itemsByCategory = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var itemStack in items)
+            {
+                if (itemStack.IsEmpty()) continue;
+
+                var itemName = GetItemName(itemStack);
+                var itemDesc = $"{itemName} x{itemStack.count}";
+                var categories = GetItemCategories(itemStack);
+
+                if (categories.Count == 0)
+                {
+                    if (!itemsByCategory.ContainsKey("(no category)"))
+                        itemsByCategory["(no category)"] = new List<string>();
+                    itemsByCategory["(no category)"].Add(itemDesc);
+                }
+                else
+                {
+                    // Use the most specific (last) category for grouping
+                    var primaryCategory = categories[categories.Count - 1];
+                    if (!itemsByCategory.ContainsKey(primaryCategory))
+                        itemsByCategory[primaryCategory] = new List<string>();
+                    itemsByCategory[primaryCategory].Add(itemDesc);
+                }
+            }
+
+            if (itemsByCategory.Count == 0)
+            {
+                Log.Out("[MagicSorter] [SortMe] is empty");
+                return;
+            }
+
+            Log.Out("[MagicSorter] Items in [SortMe] by category:");
+            foreach (var kvp in itemsByCategory.OrderBy(k => k.Key))
+            {
+                Log.Out($"  {kvp.Key}:");
+                foreach (var item in kvp.Value)
+                {
+                    Log.Out($"    - {item}");
+                }
+            }
+        }
+
+        public void Missing()
+        {
+            try
+            {
+                MissingInternal();
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[MagicSorter] Unexpected error: {ex.Message}");
+            }
+        }
+
+        private void MissingInternal()
+        {
+            var containers = FindContainersInRange();
+            var sortMeContainer = FindSortMeContainer(containers);
+
+            if (sortMeContainer == null)
+            {
+                Log.Error("[MagicSorter] No [SortMe] container found in range.");
+                return;
+            }
+
+            var categoryContainers = BuildCategoryMap(containers, sortMeContainer);
+
+            var items = sortMeContainer.GetItems();
+            if (items == null)
+            {
+                Log.Error("[MagicSorter] Could not access items in [SortMe] container");
+                return;
+            }
+
+            // Find categories that have items but no container
+            var missingCategories = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var itemStack in items)
+            {
+                if (itemStack.IsEmpty()) continue;
+
+                var categories = GetItemCategories(itemStack);
+
+                if (categories.Count == 0)
+                {
+                    // No category - would need [Sort:Unknown]
+                    if (!categoryContainers.ContainsKey(UnknownCategory))
+                    {
+                        if (!missingCategories.ContainsKey(UnknownCategory))
+                            missingCategories[UnknownCategory] = 0;
+                        missingCategories[UnknownCategory]++;
+                    }
+                }
+                else
+                {
+                    // Check if any category matches
+                    bool hasMatch = false;
+                    foreach (var category in categories)
+                    {
+                        if (categoryContainers.ContainsKey(category))
+                        {
+                            hasMatch = true;
+                            break;
+                        }
+                        // Check partial matches
+                        foreach (var containerCat in categoryContainers.Keys)
+                        {
+                            if (category.IndexOf(containerCat, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                containerCat.IndexOf(category, StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                hasMatch = true;
+                                break;
+                            }
+                        }
+                        if (hasMatch) break;
+                    }
+
+                    if (!hasMatch)
+                    {
+                        // Use the most specific category for the suggestion
+                        var suggestedCategory = categories[categories.Count - 1];
+                        if (!missingCategories.ContainsKey(suggestedCategory))
+                            missingCategories[suggestedCategory] = 0;
+                        missingCategories[suggestedCategory]++;
+                    }
+                }
+            }
+
+            if (missingCategories.Count == 0)
+            {
+                Log.Out("[MagicSorter] All items have matching containers!");
+                return;
+            }
+
+            Log.Out("[MagicSorter] Missing containers for categories:");
+            foreach (var kvp in missingCategories.OrderByDescending(k => k.Value))
+            {
+                Log.Out($"  - {kvp.Key} ({kvp.Value} items)");
+            }
+
+            Log.Out("[MagicSorter] Suggested containers to create:");
+            foreach (var category in missingCategories.Keys.OrderBy(k => k))
+            {
+                Log.Out($"  [Sort:{category}]");
             }
         }
 

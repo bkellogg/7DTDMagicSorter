@@ -20,7 +20,7 @@ The `debug/` folder contains screenshots and images used for debugging during de
 ## Project Structure
 - `MagicSorterMod.cs` - IModApi entry point (auto-discovered by game)
 - `ConsoleCmdMagicSort.cs` - Console command `magicsort` or `ms` with subcommands (sort, list, preview)
-- `ContainerSorter.cs` - Main sorting logic
+- `ContainerManager.cs` - Main sorting logic
 - `ContainerWrapper.cs` - Abstraction for different container types
 
 ## Key Technical Details

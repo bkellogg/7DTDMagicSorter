@@ -13,7 +13,7 @@ namespace MagicSorter
 
         public override string getDescription()
         {
-            return "Magic item sorter. Usage: ms <sort|list|preview> [range]";
+            return "Magic item manager. Usage: ms <sort|list|preview> [range]";
         }
 
         public override void Execute(List<string> args, CommandSenderInfo senderInfo)
@@ -45,18 +45,24 @@ namespace MagicSorter
                 return;
             }
 
-            var sorter = new ContainerSorter(player, range);
+            var manager = new ContainerManager(player, range);
 
             switch (subcommand)
             {
                 case "sort":
-                    sorter.Execute();
+                    manager.Execute();
                     break;
                 case "list":
-                    sorter.ListContainers();
+                    manager.ListContainers();
                     break;
                 case "preview":
-                    sorter.Preview();
+                    manager.Preview();
+                    break;
+                case "scan":
+                    manager.Scan();
+                    break;
+                case "missing":
+                    manager.Missing();
                     break;
                 default:
                     ShowHelp();
@@ -70,6 +76,8 @@ namespace MagicSorter
             Log.Out("  sort    - Sort items from [SortMe] into [Sort:X] containers");
             Log.Out("  list    - List all recognized containers in range");
             Log.Out("  preview - Show what items would be sorted where (dry run)");
+            Log.Out("  scan    - Show items in [SortMe] grouped by category");
+            Log.Out("  missing - Show categories that need containers");
             Log.Out("  [range] - Optional search radius (default: 20)");
         }
 
