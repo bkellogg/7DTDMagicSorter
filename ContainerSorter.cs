@@ -37,6 +37,160 @@ namespace MagicSorter
             }
         }
 
+        public void ListContainers()
+        {
+            try
+            {
+                var containers = FindContainersInRange();
+                if (containers.Count == 0)
+                {
+                    Log.Out("[MagicSorter] No containers found in range.");
+                    return;
+                }
+
+                var sortMe = FindSortMeContainer(containers);
+                var categoryMap = BuildCategoryMap(containers, sortMe);
+
+                Log.Out($"[MagicSorter] Found {containers.Count} containers in range:");
+
+                // List SortMe container
+                if (sortMe != null)
+                {
+                    var items = sortMe.GetItems();
+                    int itemCount = items?.Count(s => !s.IsEmpty()) ?? 0;
+                    Log.Out($"  [SortMe] at {sortMe.Position} - {itemCount} items");
+                }
+                else
+                {
+                    Log.Out("  [SortMe] - NOT FOUND");
+                }
+
+                // List Sort containers by category
+                foreach (var kvp in categoryMap.OrderBy(k => k.Key))
+                {
+                    foreach (var container in kvp.Value)
+                    {
+                        var items = container.GetItems();
+                        int used = items?.Count(s => !s.IsEmpty()) ?? 0;
+                        int total = items?.Length ?? 0;
+                        Log.Out($"  [Sort:{kvp.Key}] at {container.Position} - {used}/{total} slots");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[MagicSorter] Unexpected error: {ex.Message}");
+            }
+        }
+
+        public void Preview()
+        {
+            try
+            {
+                PreviewInternal();
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[MagicSorter] Unexpected error: {ex.Message}");
+            }
+        }
+
+        private void PreviewInternal()
+        {
+            var containers = FindContainersInRange();
+            if (containers.Count == 0)
+            {
+                Log.Out("[MagicSorter] No containers found in range.");
+                return;
+            }
+
+            var sortMeContainer = FindSortMeContainer(containers);
+            if (sortMeContainer == null)
+            {
+                Log.Error("[MagicSorter] No [SortMe] container found in range.");
+                return;
+            }
+
+            if (IsContainerEmpty(sortMeContainer))
+            {
+                Log.Out("[MagicSorter] Nothing to sort - [SortMe] is empty");
+                return;
+            }
+
+            var categoryContainers = BuildCategoryMap(containers, sortMeContainer);
+            if (categoryContainers.Count == 0)
+            {
+                Log.Error("[MagicSorter] No [Sort:X] containers found in range.");
+                return;
+            }
+
+            // Preview sorting
+            var items = sortMeContainer.GetItems();
+            if (items == null)
+            {
+                Log.Error("[MagicSorter] Could not access items in [SortMe] container");
+                return;
+            }
+
+            var previewResults = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            var failures = new List<string>();
+
+            for (int i = 0; i < items.Length; i++)
+            {
+                var itemStack = items[i];
+                if (itemStack.IsEmpty()) continue;
+
+                var itemName = GetItemName(itemStack);
+                var itemDesc = $"{itemName} x{itemStack.count}";
+                var categories = GetItemCategories(itemStack);
+
+                var targetContainer = FindBestContainer(categories, categoryContainers);
+
+                if (targetContainer == null && categoryContainers.TryGetValue(UnknownCategory, out var unknownContainers))
+                {
+                    targetContainer = GetFullestContainerWithSpace(unknownContainers, itemStack);
+                }
+
+                if (targetContainer != null)
+                {
+                    var targetCategory = ExtractCategory(targetContainer.Name) ?? UnknownCategory;
+                    if (!previewResults.ContainsKey(targetCategory))
+                    {
+                        previewResults[targetCategory] = new List<string>();
+                    }
+                    previewResults[targetCategory].Add(itemDesc);
+                }
+                else
+                {
+                    var catStr = categories.Count > 0 ? string.Join(", ", categories) : "unknown";
+                    failures.Add($"{itemDesc} (category: {catStr})");
+                }
+            }
+
+            // Output preview
+            Log.Out("[MagicSorter] Preview - items would be sorted as follows:");
+            foreach (var kvp in previewResults.OrderBy(k => k.Key))
+            {
+                Log.Out($"  [Sort:{kvp.Key}]:");
+                foreach (var item in kvp.Value)
+                {
+                    Log.Out($"    - {item}");
+                }
+            }
+
+            if (failures.Count > 0)
+            {
+                Log.Out("  No destination:");
+                foreach (var item in failures)
+                {
+                    Log.Out($"    - {item}");
+                }
+            }
+
+            int totalItems = previewResults.Values.Sum(v => v.Count);
+            Log.Out($"[MagicSorter] Summary: {totalItems} items would be sorted, {failures.Count} would remain");
+        }
+
         private void ExecuteInternal()
         {
             // Find all containers in range

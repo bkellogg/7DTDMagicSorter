@@ -65,7 +65,7 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="ConsoleCmdSortMagicBox.cs"/>
+        <Compile Include="ConsoleCmdMagicSort.cs"/>
         <Compile Include="ContainerSorter.cs"/>
         <Compile Include="ContainerWrapper.cs"/>
         <Compile Include="MagicSorterMod.cs"/>

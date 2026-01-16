@@ -19,11 +19,28 @@ A 7 Days to Die mod that automatically sorts items from a designated input conta
 ## Console Command
 
 ```
-sortmagicbox [range]
-smb [range]
+magicsort <command> [range]
+ms <command> [range]
 ```
 
+### Commands
+
+| Command | Description |
+|---------|-------------|
+| `sort` | Sort items from [SortMe] into [Sort:X] containers |
+| `list` | List all recognized containers in range |
+| `preview` | Show what items would be sorted where (dry run) |
+
 - **range** (optional): Search radius in blocks. Default: 20
+
+### Examples
+
+```
+ms sort        # Sort items within 20 blocks
+ms sort 30     # Sort items within 30 blocks
+ms list        # List all containers in range
+ms preview     # Preview what would happen without moving items
+```
 
 ## Naming Convention
 
@@ -118,10 +135,10 @@ The build automatically deploys to the game's Mods folder.
 ### Project Structure
 
 ```
-MagicSorterMod.cs          - Mod entry point (IModApi)
-ConsoleCmdSortMagicBox.cs  - Console command handler
-ContainerSorter.cs         - Main sorting logic
-ContainerWrapper.cs        - Abstraction for different container types
+MagicSorterMod.cs        - Mod entry point (IModApi)
+ConsoleCmdMagicSort.cs   - Console command handler (sort, list, preview)
+ContainerSorter.cs       - Main sorting logic
+ContainerWrapper.cs      - Abstraction for different container types
 ```
 
 ## Known Issues

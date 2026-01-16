@@ -19,8 +19,9 @@ The `debug/` folder contains screenshots and images used for debugging during de
 
 ## Project Structure
 - `MagicSorterMod.cs` - IModApi entry point (auto-discovered by game)
-- `ConsoleCmdSortMagicBox.cs` - Console command `sortmagicbox` or `smb`
-- `ContainerSorter.cs` - Main sorting logic with ContainerWrapper class for handling different container types
+- `ConsoleCmdMagicSort.cs` - Console command `magicsort` or `ms` with subcommands (sort, list, preview)
+- `ContainerSorter.cs` - Main sorting logic
+- `ContainerWrapper.cs` - Abstraction for different container types
 
 ## Key Technical Details
 
@@ -39,7 +40,10 @@ Working on: Getting items from TileEntityComposite containers. The container is 
 2. Launch 7 Days to Die
 3. Load into a game world
 4. Place storage crates and rename them with signs: `[SortMe]` for input, `[Sort:CategoryName]` for output
-5. Open F1 console and run `smb` or `smb 30` (with range)
+5. Open F1 console and run:
+   - `ms list` - List containers found
+   - `ms preview` - Preview what would be sorted where
+   - `ms sort` - Actually sort items
 6. Check F1 console for `[MagicSorter]` log output
 
 ## Dependencies
