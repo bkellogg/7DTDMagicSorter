@@ -1001,11 +1001,11 @@ namespace MagicSorter
                     {
                         if (categories.Count == 0)
                         {
-                            Log.Error($"[MagicSorter] Failed to move {itemName}: unknown category and no [Sort:Unknown] container");
+                            Log.Warning($"[MagicSorter] Failed to move {itemName}: unknown category and no [Sort:Unknown] container");
                         }
                         else
                         {
-                            Log.Error($"[MagicSorter] Failed to move {itemName}: no [Sort:X] container for category [{string.Join(", ", categories)}]");
+                            Log.Warning($"[MagicSorter] Failed to move {itemName}: no [Sort:X] container for category [{string.Join(", ", categories)}]");
                         }
                         _failedCount++;
                         continue;
@@ -1023,7 +1023,7 @@ namespace MagicSorter
                 }
                 else
                 {
-                    Log.Error($"[MagicSorter] Failed to move {itemName}: no space in [Sort:{targetCategory}] containers");
+                    Log.Warning($"[MagicSorter] Failed to move {itemName}: no space in [Sort:{targetCategory}] containers");
                     _failedCount++;
                 }
             }
@@ -1245,7 +1245,7 @@ namespace MagicSorter
 
             if (_failedCount > 0)
             {
-                Log.Out($"[MagicSorter] {_failedCount} items could not be moved (see errors above)");
+                Log.Out($"[MagicSorter] {_failedCount} items could not be moved (see warnings above)");
             }
         }
 
