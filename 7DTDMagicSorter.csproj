@@ -69,7 +69,22 @@
         <Compile Include="ContainerManager.cs"/>
         <Compile Include="ContainerWrapper.cs"/>
         <Compile Include="MagicSorterMod.cs"/>
+        <Compile Include="Models\CategoryDefinition.cs"/>
+        <Compile Include="Models\MappingData.cs"/>
+        <Compile Include="Models\ModConfiguration.cs"/>
         <Compile Include="Properties\AssemblyInfo.cs"/>
+        <Compile Include="Services\CategoryResolver.cs"/>
+        <Compile Include="Services\ConfigurationLoader.cs"/>
+        <Compile Include="Services\MappingLoader.cs"/>
+        <Compile Include="Services\SimpleJsonParser.cs"/>
+    </ItemGroup>
+    <ItemGroup>
+        <None Include="Config\MagicSorter.xml">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="mappings.json">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 
@@ -79,8 +94,11 @@
             <ModFolder>$(GamePath)\Mods\$(ModName)</ModFolder>
         </PropertyGroup>
         <MakeDir Directories="$(ModFolder)" Condition="!Exists('$(ModFolder)')" />
+        <MakeDir Directories="$(ModFolder)\Config" Condition="!Exists('$(ModFolder)\Config')" />
         <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ModFolder)" />
         <Copy SourceFiles="$(ProjectDir)ModInfo.xml" DestinationFolder="$(ModFolder)" />
+        <Copy SourceFiles="$(ProjectDir)Config\MagicSorter.xml" DestinationFolder="$(ModFolder)\Config" />
+        <Copy SourceFiles="$(ProjectDir)mappings.json" DestinationFolder="$(ModFolder)" Condition="Exists('$(ProjectDir)mappings.json')" />
         <Message Text="Deployed $(ModName) to $(ModFolder)" Importance="high" />
     </Target>
 

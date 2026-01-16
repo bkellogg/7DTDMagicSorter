@@ -9,8 +9,19 @@ The build automatically deploys the mod to the game folder via the DeployMod tar
 
 ## Game Logs Location
 Logs are visible in-game via the F1 console. The game also writes logs to:
-- `C:\Users\brend\AppData\Roaming\7DaysToDie\output_log.txt` (main log file)
+- `C:\Users\brend\AppData\Roaming\7DaysToDie\logs`
 - Look for `[MagicSorter]` prefix in the logs
+
+### Reading Logs via PowerShell
+Find the latest log file:
+```powershell
+powershell -Command "Get-ChildItem 'C:\\Users\\brend\\AppData\\Roaming\\7DaysToDie\\logs' -Filter '*.txt' | Sort-Object LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName"
+```
+
+Filter for MagicSorter entries and errors (with 2 lines of context):
+```powershell
+powershell -Command "Get-Content 'C:\\Users\\brend\\AppData\\Roaming\\7DaysToDie\\logs\\<LOG_FILE>.txt' | Select-String -Pattern 'MagicSorter|Exception|Error' -Context 2,2 | Select-Object -First 50"
+```
 
 ## Debug Folder
 The `debug/` folder contains screenshots and images used for debugging during development:

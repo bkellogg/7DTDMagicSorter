@@ -1,0 +1,64 @@
+Current Test Container Setup (2026-01-16)
+==========================================
+
+Location: Near coordinates (-739, 78, 912) in Navezgane
+
+Containers (from ms list output):
+---------------------------------
+[SortMe] at -739, 78, 912 - 5 items (input container)
+[Sort:Ammo] at -739, 79, 910 - 0/48 slots
+[Sort:Clothing] at -739, 78, 909 - 1/48 slots
+[Sort:Food] at -739, 79, 909 - 0/48 slots
+[Sort:handguns] at -739, 79, 908 - 0/48 slots
+[Sort:Resources] at -739, 78, 910 - 0/48 slots
+[Sort:Rifles] at -739, 78, 907 - 0/48 slots
+[Sort:Weapons] at -739, 78, 908 - 0/48 slots
+[Sort:weiner] at -739, 79, 907 - 0/48 slots (invalid test label)
+
+Test Items in [SortMe]:
+-----------------------
+1. Can of Tuna x5
+   - Internal name: foodCanTuna
+   - Extends: foodCanBeef
+   - Game Groups: Food/Cooking, CFFood/Cooking
+   - Resolved: food, cannedfood [PATTERN]
+
+2. Forged Iron x250
+   - Internal name: resourceForgedIron
+   - Game Groups: Resources
+   - Resolved: resources, craftedresources [MAPPED]
+
+3. .44 Magnum Ammo x150
+   - Internal name: ammo44MagnumBulletBall
+   - Extends: ammo9mmBulletBall
+   - Game Groups: Ammo/Weapons, Ammo, Ranged Weapons
+   - Resolved: ammo, ammo44 [PATTERN]
+
+4. Pistol x1
+   - Internal name: gunHandgunT1Pistol
+   - Game Groups: Ammo/Weapons, Ranged Weapons
+   - Resolved: weapons, ranged, pistols [PATTERN]
+
+5. Tactical Assault Rifle x1
+   - Internal name: gunMGT2TacticalAR
+   - Game Groups: Ammo/Weapons, Ranged Weapons
+   - Resolved: weapons, ranged, machineguns [PATTERN]
+
+Notes:
+------
+- Pattern matching is working correctly for item categorization
+- Alias "handguns" -> "pistols" already exists (line 349 in mappings.json)
+- [Sort:handguns] should receive pistols via reverse alias lookup
+- "weiner" is intentionally invalid to test the `ms invalid` command
+
+Issues Found:
+-------------
+1. Tactical AR (gunMGT2TacticalAR) categorized as "machineguns" because game uses "gunMG" prefix
+   - Game naming: gunMG = machine gun class (includes Auto Shotgun, Tactical AR, M60)
+   - Could add explicit mapping to override pattern for assault rifles
+
+Next Steps:
+-----------
+- Run `ms preview` to verify pistol goes to [Sort:handguns] (not [Sort:Weapons])
+- Run `ms sort` to actually sort items
+- If Tactical AR should go to Rifles, add explicit mapping in items section

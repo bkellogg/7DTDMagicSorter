@@ -4,8 +4,6 @@ namespace MagicSorter
 {
     public class ConsoleCmdMagicSort : ConsoleCmdAbstract
     {
-        private const int DefaultRange = 20;
-
         public override string[] getCommands()
         {
             return new[] { "magicsort", "ms" };
@@ -13,7 +11,7 @@ namespace MagicSorter
 
         public override string getDescription()
         {
-            return "Magic item manager. Usage: ms <sort|list|preview> [range]";
+            return "Magic item manager. Usage: ms <sort|list|preview|reload|config|mappings> [range]";
         }
 
         public override void Execute(List<string> args, CommandSenderInfo senderInfo)
@@ -25,7 +23,24 @@ namespace MagicSorter
             }
 
             string subcommand = args[0].ToLower();
-            int range = DefaultRange;
+
+            // Handle commands that don't need a player
+            switch (subcommand)
+            {
+                case "reload":
+                    ReloadMappings();
+                    return;
+                case "config":
+                    ShowConfig();
+                    return;
+                case "mappings":
+                    ShowMappings();
+                    return;
+            }
+
+            // Get default range from config
+            int defaultRange = MagicSorterMod.Config?.DefaultRange ?? 20;
+            int range = defaultRange;
 
             // Parse optional range argument
             if (args.Count > 1)
@@ -50,7 +65,7 @@ namespace MagicSorter
             switch (subcommand)
             {
                 case "sort":
-                    manager.Execute();
+                    manager.Sort();
                     break;
                 case "list":
                     manager.ListContainers();
@@ -60,9 +75,18 @@ namespace MagicSorter
                     break;
                 case "scan":
                     manager.Scan();
-                    break;
+                    break;      
                 case "missing":
                     manager.Missing();
+                    break;
+                case "invalid":
+                    manager.Invalid();
+                    break;
+                case "suggest":
+                    manager.Suggest();
+                    break;
+                case "debug":
+                    manager.DebugItems();
                     break;
                 default:
                     ShowHelp();
@@ -70,15 +94,84 @@ namespace MagicSorter
             }
         }
 
+        private void ReloadMappings()
+        {
+            Log.Out("[MagicSorter] Reloading mappings...");
+
+            var loader = MagicSorterMod.MappingLoader;
+            if (loader == null)
+            {
+                Log.Error("[MagicSorter] Mapping loader not initialized");
+                return;
+            }
+
+            if (loader.ForceRefresh())
+            {
+                Log.Out("[MagicSorter] Mappings reloaded successfully");
+            }
+            else
+            {
+                Log.Warning("[MagicSorter] Failed to reload mappings - using existing");
+            }
+        }
+
+        private void ShowConfig()
+        {
+            var config = MagicSorterMod.Config;
+            if (config == null)
+            {
+                Log.Out("[MagicSorter] No configuration loaded");
+                return;
+            }
+
+            Log.Out("[MagicSorter] Current configuration:");
+            Log.Out($"  RemoteMappingsUrl: {(string.IsNullOrEmpty(config.RemoteMappingsUrl) ? "(not set)" : config.RemoteMappingsUrl)}");
+            Log.Out($"  CacheDurationHours: {config.CacheDurationHours}");
+            Log.Out($"  FallbackToBuiltIn: {config.FallbackToBuiltIn}");
+            Log.Out($"  UseSpecificityResolution: {config.UseSpecificityResolution}");
+            Log.Out($"  DefaultRange: {config.DefaultRange}");
+            Log.Out($"  DebugLogging: {config.DebugLogging}");
+            Log.Out($"  ConnectionTimeoutSeconds: {config.ConnectionTimeoutSeconds}");
+        }
+
+        private void ShowMappings()
+        {
+            var loader = MagicSorterMod.MappingLoader;
+            if (loader == null)
+            {
+                Log.Out("[MagicSorter] Mapping loader not initialized");
+                return;
+            }
+
+            Log.Out($"[MagicSorter] Mappings status: {loader.GetStatus()}");
+
+            if (loader.IsInitialized)
+            {
+                var mappings = loader.GetMappings();
+                if (mappings != null)
+                {
+                    Log.Out($"  Aliases defined: {mappings.ContainerAliases.Count}");
+                    Log.Out($"  Tags defined: {mappings.Tags.Count}");
+                }
+            }
+        }
+
         private void ShowHelp()
         {
+            int defaultRange = MagicSorterMod.Config?.DefaultRange ?? 20;
             Log.Out("[MagicSorter] Usage: ms <command> [range]");
-            Log.Out("  sort    - Sort items from [SortMe] into [Sort:X] containers");
-            Log.Out("  list    - List all recognized containers in range");
-            Log.Out("  preview - Show what items would be sorted where (dry run)");
-            Log.Out("  scan    - Show items in [SortMe] grouped by category");
-            Log.Out("  missing - Show categories that need containers");
-            Log.Out("  [range] - Optional search radius (default: 20)");
+            Log.Out("  sort     - Sort items from [SortMe] into [Sort:X] containers");
+            Log.Out("  list     - List all recognized containers in range");
+            Log.Out("  preview  - Show what items would be sorted where (dry run)");
+            Log.Out("  scan     - Show items in [SortMe] grouped by category");
+            Log.Out("  missing  - Show categories that need containers");
+            Log.Out("  suggest  - Show unsortable items and suggested containers");
+            Log.Out("  invalid  - Show containers with invalid/unknown labels");
+            Log.Out("  debug    - Show internal item names for mapping");
+            Log.Out("  reload   - Force reload mappings from remote URL");
+            Log.Out("  config   - Show current configuration");
+            Log.Out("  mappings - Show loaded mappings status");
+            Log.Out($"  [range]  - Optional search radius (default: {defaultRange})");
         }
 
         private EntityPlayer GetPlayerFromSender(CommandSenderInfo senderInfo)

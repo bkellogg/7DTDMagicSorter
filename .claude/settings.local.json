@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell:*)",
+      "Bash(cmd /c:*)",
+      "Bash(where:*)",
+      "Bash(find:*)",
+      "Bash(git add:*)",
+      "Bash(git branch:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git remote:*)",
+      "Bash(git reset:*)",
+      "Bash(ls:*)",
+      "Bash(dir /s \"C:\\\\Users\\\\brend\\\\Documents\\\\projects\\\\7DTDMagicSorter\")",
+      "Bash(Select-Object -Last 15)",
+      "Bash(Select-Object -Last 20)",
+      "Bash(Get-ChildItem \"C:\\\\Users\\\\brend\\\\AppData\\\\Roaming\\\\7DaysToDie\\\\logs\" -Filter \"*.txt\")",
+      "Bash(Sort-Object LastWriteTime -Descending)",
+      "Bash(Select-Object -First 1)",
+      "Bash(ForEach-Object { $_FullName })"
+    ]
+  }
+}

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MagicSorter.Services;
 using UnityEngine;
 
 namespace MagicSorter
@@ -14,6 +15,7 @@ namespace MagicSorter
         private readonly EntityPlayer _player;
         private readonly int _range;
         private readonly World _world;
+        private readonly CategoryResolver _resolver;
 
         private readonly Dictionary<string, int> _sortedCounts = new Dictionary<string, int>();
         private int _failedCount;
@@ -23,13 +25,14 @@ namespace MagicSorter
             _player = player;
             _range = range;
             _world = GameManager.Instance.World;
+            _resolver = MagicSorterMod.Resolver;
         }
 
-        public void Execute()
+        public void Sort()
         {
             try
             {
-                ExecuteInternal();
+                SortInternal();
             }
             catch (Exception ex)
             {
@@ -181,6 +184,476 @@ namespace MagicSorter
             }
         }
 
+        public void Invalid()
+        {
+            try
+            {
+                InvalidInternal();
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[MagicSorter] Unexpected error: {ex.Message}");
+            }
+        }
+
+        private void InvalidInternal()
+        {
+            var containers = FindContainersInRange();
+            if (containers.Count == 0)
+            {
+                Log.Out("[MagicSorter] No containers found in range.");
+                return;
+            }
+
+            var sortMe = FindSortMeContainer(containers);
+            var categoryMap = BuildCategoryMap(containers, sortMe);
+
+            if (categoryMap.Count == 0)
+            {
+                Log.Out("[MagicSorter] No [Sort:X] containers found in range.");
+                return;
+            }
+
+            var mappings = MagicSorterMod.MappingLoader?.GetMappings();
+            var invalidContainers = new List<(string label, Vector3i pos, string suggestion)>();
+
+            foreach (var kvp in categoryMap)
+            {
+                var label = kvp.Key;
+                bool isValid = false;
+                string suggestion = null;
+
+                // Check if it's a known category in mappings
+                if (mappings != null && mappings.Categories.ContainsKey(label))
+                {
+                    isValid = true;
+                }
+                // Check if it's an alias
+                else if (mappings != null && mappings.ContainerAliases.ContainsKey(label))
+                {
+                    isValid = true;
+                }
+                // Check if it resolves to a known category
+                else if (mappings != null)
+                {
+                    var resolved = mappings.ResolveAlias(label);
+                    if (resolved != label && mappings.Categories.ContainsKey(resolved))
+                    {
+                        isValid = true;
+                    }
+                }
+
+                // If still not valid, check for close matches (typos)
+                if (!isValid && mappings != null)
+                {
+                    suggestion = FindClosestCategory(label, mappings);
+                }
+
+                // "Unknown" is always valid as a fallback
+                if (label.Equals(UnknownCategory, StringComparison.OrdinalIgnoreCase))
+                {
+                    isValid = true;
+                }
+
+                if (!isValid)
+                {
+                    foreach (var container in kvp.Value)
+                    {
+                        invalidContainers.Add((label, container.Position, suggestion));
+                    }
+                }
+            }
+
+            if (invalidContainers.Count == 0)
+            {
+                Log.Out("[MagicSorter] All container labels are valid!");
+                return;
+            }
+
+            Log.Out($"[MagicSorter] Found {invalidContainers.Count} container(s) with invalid/unknown labels:");
+            foreach (var (label, pos, suggestion) in invalidContainers)
+            {
+                var suggestionText = !string.IsNullOrEmpty(suggestion) ? $" (did you mean '{suggestion}'?)" : "";
+                Log.Out($"  [Sort:{label}] at {pos}{suggestionText}");
+            }
+
+            Log.Out("[MagicSorter] These containers won't receive any items during sorting.");
+            Log.Out("[MagicSorter] Use 'ms mappings' to see available categories, or check for typos.");
+        }
+
+        private string FindClosestCategory(string label, Models.MappingData mappings)
+        {
+            string bestMatch = null;
+            int bestDistance = int.MaxValue;
+            int threshold = Math.Max(2, label.Length / 3); // Allow more errors for longer labels
+
+            // Check categories
+            foreach (var category in mappings.Categories.Keys)
+            {
+                var distance = LevenshteinDistance(label.ToLower(), category.ToLower());
+                if (distance < bestDistance && distance <= threshold)
+                {
+                    bestDistance = distance;
+                    bestMatch = category;
+                }
+            }
+
+            // Check aliases
+            foreach (var alias in mappings.ContainerAliases.Keys)
+            {
+                var distance = LevenshteinDistance(label.ToLower(), alias.ToLower());
+                if (distance < bestDistance && distance <= threshold)
+                {
+                    bestDistance = distance;
+                    bestMatch = alias;
+                }
+            }
+
+            return bestMatch;
+        }
+
+        public void Suggest()
+        {
+            try
+            {
+                SuggestInternal();
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[MagicSorter] Unexpected error: {ex.Message}");
+            }
+        }
+
+        private void SuggestInternal()
+        {
+            var containers = FindContainersInRange();
+            var sortMeContainer = FindSortMeContainer(containers);
+
+            if (sortMeContainer == null)
+            {
+                Log.Error("[MagicSorter] No [SortMe] container found in range.");
+                return;
+            }
+
+            var categoryContainers = BuildCategoryMap(containers, sortMeContainer);
+
+            var items = sortMeContainer.GetItems();
+            if (items == null)
+            {
+                Log.Error("[MagicSorter] Could not access items in [SortMe] container");
+                return;
+            }
+
+            // Find items that can't be sorted and group by their categories
+            var unsortableItems = new List<(string name, int count, List<string> categories)>();
+
+            foreach (var itemStack in items)
+            {
+                if (itemStack.IsEmpty()) continue;
+
+                var categories = GetItemCategories(itemStack);
+                var matchingContainer = FindBestContainer(categories, categoryContainers, itemStack);
+
+                // Also check Unknown fallback
+                if (matchingContainer == null && categoryContainers.ContainsKey(UnknownCategory))
+                {
+                    matchingContainer = GetFullestContainerWithSpace(categoryContainers[UnknownCategory], itemStack);
+                }
+
+                if (matchingContainer == null)
+                {
+                    var itemName = GetItemName(itemStack);
+                    unsortableItems.Add((itemName, itemStack.count, categories));
+                }
+            }
+
+            if (unsortableItems.Count == 0)
+            {
+                Log.Out("[MagicSorter] All items can be sorted with current containers!");
+                return;
+            }
+
+            Log.Out($"[MagicSorter] {unsortableItems.Count} item(s) cannot be sorted. Suggested containers:");
+
+            // Group by suggested container (most specific category)
+            var suggestions = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var (name, count, categories) in unsortableItems)
+            {
+                string suggestedCategory;
+                if (categories.Count == 0)
+                {
+                    suggestedCategory = "Unknown";
+                }
+                else
+                {
+                    // Use most specific category (last in list)
+                    suggestedCategory = categories[categories.Count - 1];
+                }
+
+                if (!suggestions.ContainsKey(suggestedCategory))
+                    suggestions[suggestedCategory] = new List<string>();
+
+                var allCats = categories.Count > 0 ? string.Join(" → ", categories) : "(none)";
+                suggestions[suggestedCategory].Add($"{name} x{count} [{allCats}]");
+            }
+
+            foreach (var kvp in suggestions.OrderBy(k => k.Key))
+            {
+                Log.Out($"  Create [Sort:{kvp.Key}] for:");
+                foreach (var item in kvp.Value)
+                {
+                    Log.Out($"    - {item}");
+                }
+            }
+        }
+
+        public void DebugItems()
+        {
+            try
+            {
+                DebugInternal();
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[MagicSorter] Unexpected error: {ex.Message}");
+            }
+        }
+
+        private void DebugInternal()
+        {
+            var containers = FindContainersInRange();
+            var sortMeContainer = FindSortMeContainer(containers);
+
+            if (sortMeContainer == null)
+            {
+                Log.Error("[MagicSorter] No [SortMe] container found in range.");
+                return;
+            }
+
+            var items = sortMeContainer.GetItems();
+            if (items == null)
+            {
+                Log.Error("[MagicSorter] Could not access items in [SortMe] container");
+                return;
+            }
+
+            var mappings = MagicSorterMod.MappingLoader?.GetMappings();
+
+            Log.Out("[MagicSorter] Debug - Item details in [SortMe]:");
+
+            foreach (var itemStack in items)
+            {
+                if (itemStack.IsEmpty()) continue;
+
+                var itemClass = itemStack.itemValue?.ItemClass;
+                if (itemClass == null) continue;
+
+                var internalName = itemClass.Name ?? "(null)";
+                var localizedName = itemClass.GetLocalizedItemName() ?? internalName;
+                var groups = itemClass.Groups ?? new string[0];
+                var groupsStr = groups.Length > 0 ? string.Join(", ", groups) : "(none)";
+
+                // Get additional ItemClass fields for investigation
+                string customIcon = null;
+                string descriptionKey = null;
+                string extendsName = null;
+                string parentName = null;
+                var allProps = new List<string>();
+
+                try
+                {
+                    var customIconProp = itemClass.GetType().GetProperty("CustomIcon");
+                    if (customIconProp != null)
+                        customIcon = customIconProp.GetValue(itemClass) as string;
+
+                    var descProp = itemClass.GetType().GetProperty("DescriptionKey");
+                    if (descProp != null)
+                        descriptionKey = descProp.GetValue(itemClass) as string;
+
+                    // Check for Extends property (inheritance from items.xml)
+                    var properties = itemClass.Properties;
+                    if (properties != null)
+                    {
+                        if (properties.Contains("Extends"))
+                        {
+                            extendsName = properties.GetString("Extends");
+                        }
+                    }
+
+                    // Try to get parent/base class if exists
+                    var parentField = itemClass.GetType().GetField("parent",
+                        System.Reflection.BindingFlags.Public |
+                        System.Reflection.BindingFlags.NonPublic |
+                        System.Reflection.BindingFlags.Instance);
+                    if (parentField != null)
+                    {
+                        var parent = parentField.GetValue(itemClass);
+                        if (parent != null)
+                        {
+                            var parentNameProp = parent.GetType().GetProperty("Name");
+                            if (parentNameProp != null)
+                                parentName = parentNameProp.GetValue(parent) as string;
+                        }
+                    }
+
+                    // List all string properties for debugging
+                    foreach (var prop in itemClass.GetType().GetProperties())
+                    {
+                        try
+                        {
+                            if (prop.PropertyType == typeof(string) && prop.CanRead)
+                            {
+                                var val = prop.GetValue(itemClass) as string;
+                                if (!string.IsNullOrEmpty(val) && val.Length < 100)
+                                {
+                                    allProps.Add($"{prop.Name}={val}");
+                                }
+                            }
+                        }
+                        catch { }
+                    }
+                }
+                catch { }
+
+                // Check source of categories
+                bool inMappings = mappings != null && mappings.Items.ContainsKey(internalName);
+                bool fromPattern = !inMappings && _resolver != null && HasPatternMatch(internalName);
+                var mappingStatus = inMappings ? "MAPPED" : (fromPattern ? "PATTERN" : "FALLBACK");
+
+                // Get resolved categories
+                var categories = GetItemCategories(itemStack);
+                var categoriesStr = categories.Count > 0 ? string.Join(", ", categories) : "(none)";
+
+                Log.Out($"  {localizedName} x{itemStack.count}:");
+                Log.Out($"    Internal name: {internalName}");
+                if (!string.IsNullOrEmpty(extendsName))
+                    Log.Out($"    Extends: {extendsName}");
+                if (!string.IsNullOrEmpty(parentName))
+                    Log.Out($"    Parent: {parentName}");
+                if (!string.IsNullOrEmpty(customIcon))
+                    Log.Out($"    CustomIcon: {customIcon}");
+                if (!string.IsNullOrEmpty(descriptionKey))
+                    Log.Out($"    DescriptionKey: {descriptionKey}");
+                Log.Out($"    Game Groups: {groupsStr}");
+                Log.Out($"    Resolved categories: {categoriesStr} [{mappingStatus}]");
+                if (allProps.Count > 0)
+                    Log.Out($"    All string props: {string.Join(", ", allProps)}");
+            }
+
+            if (items.All(s => s.IsEmpty()))
+            {
+                Log.Out("[MagicSorter] [SortMe] is empty");
+            }
+        }
+
+        private bool HasPatternMatch(string itemName)
+        {
+            // Check if the item name would match any of our patterns
+            if (string.IsNullOrEmpty(itemName))
+                return false;
+
+            // Check gun patterns
+            if (itemName.StartsWith("gunHandgun", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("gunShotgun", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("gunRifle", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("gunMG", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("gunBow", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("gunCrossbow", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("gunExplosives", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("gunRocketLauncher", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // Melee weapons
+            if (itemName.StartsWith("meleeWpnBlade", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("meleeWpnClub", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("meleeWpnSpear", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("meleeWpnSledge", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("meleeWpnKnuckles", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // Tools
+            if (itemName.StartsWith("meleeToolPick", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("meleeToolAxe", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("meleeToolShovel", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("meleeToolRepair", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("meleeToolSalvage", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // Ammo
+            if (itemName.StartsWith("ammo", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // Throwables
+            if (itemName.StartsWith("thrownDynamite", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("thrownPipe", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("thrownGrenade", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("thrownFrag", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // Armor
+            if (itemName.StartsWith("armor", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // Resources
+            if (itemName.StartsWith("resource", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // Food and drinks
+            if (itemName.StartsWith("drink", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("food", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // Medical
+            if (itemName.StartsWith("drug", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("medical", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // Mods
+            if (itemName.StartsWith("mod", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // Vehicle parts
+            if (itemName.StartsWith("vehicle", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // Books and schematics
+            if (itemName.StartsWith("schematic", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("book", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("perkBook", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // Seeds/planting
+            if (itemName.StartsWith("planted", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("seed", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            return false;
+        }
+
+        private int LevenshteinDistance(string s1, string s2)
+        {
+            int[,] d = new int[s1.Length + 1, s2.Length + 1];
+
+            for (int i = 0; i <= s1.Length; i++)
+                d[i, 0] = i;
+            for (int j = 0; j <= s2.Length; j++)
+                d[0, j] = j;
+
+            for (int i = 1; i <= s1.Length; i++)
+            {
+                for (int j = 1; j <= s2.Length; j++)
+                {
+                    int cost = (s1[i - 1] == s2[j - 1]) ? 0 : 1;
+                    d[i, j] = Math.Min(
+                        Math.Min(d[i - 1, j] + 1, d[i, j - 1] + 1),
+                        d[i - 1, j - 1] + cost);
+                }
+            }
+
+            return d[s1.Length, s2.Length];
+        }
+
         private void MissingInternal()
         {
             var containers = FindContainersInRange();
@@ -222,29 +695,10 @@ namespace MagicSorter
                 }
                 else
                 {
-                    // Check if any category matches
-                    bool hasMatch = false;
-                    foreach (var category in categories)
-                    {
-                        if (categoryContainers.ContainsKey(category))
-                        {
-                            hasMatch = true;
-                            break;
-                        }
-                        // Check partial matches
-                        foreach (var containerCat in categoryContainers.Keys)
-                        {
-                            if (category.IndexOf(containerCat, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                containerCat.IndexOf(category, StringComparison.OrdinalIgnoreCase) >= 0)
-                            {
-                                hasMatch = true;
-                                break;
-                            }
-                        }
-                        if (hasMatch) break;
-                    }
+                    // Use the resolver to check if any container matches (respects aliases)
+                    var matchingContainer = FindBestContainer(categories, categoryContainers, itemStack);
 
-                    if (!hasMatch)
+                    if (matchingContainer == null)
                     {
                         // Use the most specific category for the suggestion
                         var suggestedCategory = categories[categories.Count - 1];
@@ -323,7 +777,7 @@ namespace MagicSorter
                 var itemDesc = $"{itemName} x{itemStack.count}";
                 var categories = GetItemCategories(itemStack);
 
-                var targetContainer = FindBestContainer(categories, categoryContainers);
+                var targetContainer = FindBestContainer(categories, categoryContainers, itemStack);
 
                 if (targetContainer == null && categoryContainers.TryGetValue(UnknownCategory, out var unknownContainers))
                 {
@@ -370,7 +824,7 @@ namespace MagicSorter
             Log.Out($"[MagicSorter] Summary: {totalItems} items would be sorted, {failures.Count} would remain");
         }
 
-        private void ExecuteInternal()
+        private void SortInternal()
         {
             // Find all containers in range
             var containers = FindContainersInRange();
@@ -533,7 +987,7 @@ namespace MagicSorter
                 var categories = GetItemCategories(itemStack);
 
                 // Try to find a matching container
-                var targetContainer = FindBestContainer(categories, categoryContainers);
+                var targetContainer = FindBestContainer(categories, categoryContainers, itemStack);
 
                 if (targetContainer == null)
                 {
@@ -577,6 +1031,13 @@ namespace MagicSorter
 
         private List<string> GetItemCategories(ItemStack itemStack)
         {
+            // Use the resolver if available, otherwise fall back to built-in Groups
+            if (_resolver != null)
+            {
+                return _resolver.GetItemCategories(itemStack);
+            }
+
+            // Fallback: use built-in Groups directly
             var result = new List<string>();
 
             if (itemStack.itemValue?.ItemClass == null) return result;
@@ -596,9 +1057,16 @@ namespace MagicSorter
         }
 
         private ContainerWrapper FindBestContainer(List<string> itemCategories,
-            Dictionary<string, List<ContainerWrapper>> categoryContainers)
+            Dictionary<string, List<ContainerWrapper>> categoryContainers,
+            ItemStack itemStack = null)
         {
-            // Try categories in reverse order (most specific first, rightmost in the Groups array)
+            // Use the resolver if available for specificity-based matching
+            if (_resolver != null)
+            {
+                return _resolver.FindBestContainer(itemCategories, categoryContainers, itemStack);
+            }
+
+            // Fallback: original behavior - try categories in reverse order (most specific first)
             for (int i = itemCategories.Count - 1; i >= 0; i--)
             {
                 var category = itemCategories[i];

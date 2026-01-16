@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  MagicSorter Configuration
+
+  This file configures the MagicSorter mod behavior.
+  All settings are optional - defaults are used if omitted.
+-->
+<MagicSorter>
+
+  <!--
+    URL to fetch remote category mappings from.
+    Leave empty to use only local mappings or built-in Groups.
+    Example: https://raw.githubusercontent.com/youruser/repo/main/mappings.json
+  -->
+  <RemoteMappingsUrl></RemoteMappingsUrl>
+
+  <!--
+    How many hours to cache remote mappings before refreshing.
+    Default: 24
+  -->
+  <CacheDurationHours>24</CacheDurationHours>
+
+  <!--
+    Whether to fall back to the game's built-in Groups system
+    when an item is not found in the mappings.
+    Default: true
+  -->
+  <FallbackToBuiltIn>true</FallbackToBuiltIn>
+
+  <!--
+    Whether to use specificity-based resolution for matching items to containers.
+    When true, more specific categories (higher specificity) are preferred.
+    For example, a pistol would go to [Sort:pistols] (specificity 100)
+    instead of [Sort:weapons] (specificity 50).
+    Default: true
+  -->
+  <UseSpecificityResolution>true</UseSpecificityResolution>
+
+  <!--
+    Default search range in blocks for finding containers.
+    Can be overridden per-command with: ms sort 30
+    Default: 20
+  -->
+  <DefaultRange>20</DefaultRange>
+
+  <!--
+    Enable verbose debug logging to the F1 console.
+    Useful for troubleshooting sorting issues.
+    Default: false
+  -->
+  <DebugLogging>false</DebugLogging>
+
+  <!--
+    Connection timeout in seconds for fetching remote mappings.
+    Default: 10
+  -->
+  <ConnectionTimeoutSeconds>10</ConnectionTimeoutSeconds>
+
+</MagicSorter>
