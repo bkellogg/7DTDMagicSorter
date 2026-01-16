@@ -176,13 +176,49 @@ namespace MagicSorter
 
         private EntityPlayer GetPlayerFromSender(CommandSenderInfo senderInfo)
         {
+            // Remote client (multiplayer)
             if (senderInfo.RemoteClientInfo != null)
             {
-                return GameManager.Instance.World.GetEntity(senderInfo.RemoteClientInfo.entityId) as EntityPlayer;
+                var entity = GameManager.Instance.World?.GetEntity(senderInfo.RemoteClientInfo.entityId);
+                if (entity is EntityPlayer remotePlayer)
+                {
+                    return remotePlayer;
+                }
             }
 
-            // Local player (single player or host)
-            return GameManager.Instance.World.GetPrimaryPlayer();
+            // Try to get player by client info's player ID
+            if (senderInfo.RemoteClientInfo != null)
+            {
+                var players = GameManager.Instance.World?.Players?.list;
+                if (players != null)
+                {
+                    foreach (var player in players)
+                    {
+                        if (player.entityId == senderInfo.RemoteClientInfo.entityId)
+                        {
+                            return player;
+                        }
+                    }
+                }
+            }
+
+            // Local player (single player or host playing on their own server)
+            var primaryPlayer = GameManager.Instance.World?.GetPrimaryPlayer();
+            if (primaryPlayer != null)
+            {
+                return primaryPlayer;
+            }
+
+            // Last resort: find any player in the world (dedicated server with only one player)
+            var allPlayers = GameManager.Instance.World?.Players?.list;
+            if (allPlayers != null && allPlayers.Count > 0)
+            {
+                // This shouldn't normally happen, but provides a fallback
+                Log.Warning("[MagicSorter] Could not identify specific player, using first available player");
+                return allPlayers[0];
+            }
+
+            return null;
         }
     }
 }

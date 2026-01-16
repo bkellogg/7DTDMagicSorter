@@ -20,6 +20,22 @@ A 7 Days to Die mod that automatically sorts items from a designated input conta
    - `mappings.json`
    - `Config/MagicSorter.xml`
 
+## Multiplayer Support
+
+| Mode | Installation | Who Can Use |
+|------|--------------|-------------|
+| Single Player | Install on your game | You |
+| Peer-to-Peer (Host) | Install on host's game | All players |
+| Dedicated Server | Install on server | All players |
+
+**How it works:**
+- The mod only needs to be installed on the **server** (or host in peer-to-peer)
+- All connected players can use the `ms` commands
+- Each player's commands operate on containers near **their** position
+- Players can sort items independently without affecting each other
+
+**Note:** Clients do NOT need to install the mod - the server handles everything.
+
 ## Console Commands
 
 ```
