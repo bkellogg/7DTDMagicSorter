@@ -243,10 +243,17 @@ namespace MagicSorter.Services
                 itemName.StartsWith("seed", StringComparison.OrdinalIgnoreCase))
                 return new List<string> { "food", "farming" };
 
-            // Lighting
-            if (itemName.StartsWith("torch", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("candle", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("light", StringComparison.OrdinalIgnoreCase))
+            // Lighting (but not flashlights which are tools, or light mods)
+            if ((itemName.IndexOf("Torch", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 itemName.IndexOf("Candle", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 itemName.IndexOf("Lantern", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 itemName.StartsWith("light", StringComparison.OrdinalIgnoreCase) ||
+                 itemName.IndexOf("ceilingLight", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 itemName.IndexOf("wallLight", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 itemName.IndexOf("floorLight", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 itemName.IndexOf("Fluorescent", StringComparison.OrdinalIgnoreCase) >= 0) &&
+                !itemName.StartsWith("flashlight", StringComparison.OrdinalIgnoreCase) &&
+                !itemName.StartsWith("mod", StringComparison.OrdinalIgnoreCase))
                 return new List<string> { "building", "lighting" };
 
             // Workstations
@@ -307,6 +314,16 @@ namespace MagicSorter.Services
                 itemName.IndexOf("Door", StringComparison.OrdinalIgnoreCase) >= 0 ||
                 itemName.IndexOf("Gate", StringComparison.OrdinalIgnoreCase) >= 0)
                 return new List<string> { "building", "doors" };
+
+            // Traps and defenses
+            if (itemName.IndexOf("Trap", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                itemName.IndexOf("turret", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                itemName.StartsWith("electricfence", StringComparison.OrdinalIgnoreCase) ||
+                itemName.IndexOf("TriggerPlate", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                itemName.IndexOf("motionSensor", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                itemName.IndexOf("barbedWire", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                itemName.IndexOf("spikes", StringComparison.OrdinalIgnoreCase) >= 0)
+                return new List<string> { "building", "traps" };
 
             // Complete vehicles (not parts)
             if (itemName.Equals("vehicleMinibike", StringComparison.OrdinalIgnoreCase) ||
@@ -467,58 +484,9 @@ namespace MagicSorter.Services
                     }
                 }
 
-                // Try partial match (container category contains item category or vice versa)
-                foreach (var kvp in categoryContainers)
-                {
-                    if (kvp.Key.Equals("Unknown", StringComparison.OrdinalIgnoreCase))
-                        continue;
-
-                    bool isPartialMatch = false;
-                    if (category.IndexOf(kvp.Key, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                        kvp.Key.IndexOf(category, StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
-                        isPartialMatch = true;
-                    }
-
-                    // Check reversed alias
-                    if (!isPartialMatch && mappings != null)
-                    {
-                        foreach (var alias in mappings.ContainerAliases)
-                        {
-                            if (alias.Value.Equals(kvp.Key, StringComparison.OrdinalIgnoreCase))
-                            {
-                                if (category.IndexOf(alias.Key, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                    alias.Key.IndexOf(category, StringComparison.OrdinalIgnoreCase) >= 0)
-                                {
-                                    isPartialMatch = true;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    if (isPartialMatch)
-                    {
-                        var specificity = GetCategorySpecificity(mappings, kvp.Key);
-                        foreach (var container in kvp.Value)
-                        {
-                            // Avoid duplicates
-                            if (candidates.Any(c => c.Container == container))
-                                continue;
-
-                            if (HasSpaceForItem(container, itemStack))
-                            {
-                                candidates.Add(new ContainerCandidate
-                                {
-                                    Container = container,
-                                    Specificity = specificity,
-                                    Category = kvp.Key,
-                                    IsExactMatch = false
-                                });
-                            }
-                        }
-                    }
-                }
+                // Note: Removed overly aggressive partial matching that was causing false matches
+                // (e.g., "Melee Weapons" alias containing "weapons" would match items with category "weapons" to [Sort:Melee])
+                // Now we only use exact matches and alias resolution, with fallback chain for broader categories
             }
 
             // If no direct matches, try fallback categories

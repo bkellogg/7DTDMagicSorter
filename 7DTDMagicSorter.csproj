@@ -43,6 +43,10 @@
           <HintPath>$(GamePath)\7DaysToDie_Data\Managed\LogLibrary.dll</HintPath>
           <Private>False</Private>
         </Reference>
+        <Reference Include="Newtonsoft.Json">
+          <HintPath>$(GamePath)\7DaysToDie_Data\Managed\Newtonsoft.Json.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
         <Reference Include="System"/>
         <Reference Include="System.Core"/>
         <Reference Include="System.Data"/>
@@ -76,7 +80,6 @@
         <Compile Include="Services\CategoryResolver.cs"/>
         <Compile Include="Services\ConfigurationLoader.cs"/>
         <Compile Include="Services\MappingLoader.cs"/>
-        <Compile Include="Services\SimpleJsonParser.cs"/>
     </ItemGroup>
     <ItemGroup>
         <None Include="Config\MagicSorter.xml">

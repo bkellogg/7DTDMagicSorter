@@ -3,6 +3,7 @@ using System.IO;
 using System.Net;
 using System.Threading;
 using MagicSorter.Models;
+using Newtonsoft.Json;
 
 namespace MagicSorter.Services
 {
@@ -171,10 +172,11 @@ namespace MagicSorter.Services
             try
             {
                 var json = File.ReadAllText(localPath);
-                var mappings = SimpleJsonParser.ParseMappingData(json);
+                var mappings = JsonConvert.DeserializeObject<MappingData>(json);
 
                 if (mappings != null && (mappings.Categories.Count > 0 || mappings.Items.Count > 0))
                 {
+                    mappings.NormalizeDictionaries();
                     lock (_lock)
                     {
                         _currentMappings = mappings;
@@ -212,10 +214,11 @@ namespace MagicSorter.Services
                 }
 
                 var json = File.ReadAllText(cachePath);
-                var mappings = SimpleJsonParser.ParseMappingData(json);
+                var mappings = JsonConvert.DeserializeObject<MappingData>(json);
 
                 if (mappings != null && (mappings.Categories.Count > 0 || mappings.Items.Count > 0))
                 {
+                    mappings.NormalizeDictionaries();
                     lock (_lock)
                     {
                         _currentMappings = mappings;
@@ -262,7 +265,7 @@ namespace MagicSorter.Services
                         return false;
                     }
 
-                    var mappings = SimpleJsonParser.ParseMappingData(json);
+                    var mappings = JsonConvert.DeserializeObject<MappingData>(json);
 
                     if (mappings == null || (mappings.Categories.Count == 0 && mappings.Items.Count == 0))
                     {
@@ -270,6 +273,7 @@ namespace MagicSorter.Services
                         return false;
                     }
 
+                    mappings.NormalizeDictionaries();
                     lock (_lock)
                     {
                         _currentMappings = mappings;

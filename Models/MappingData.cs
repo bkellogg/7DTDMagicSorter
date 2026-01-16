@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace MagicSorter.Models
 {
@@ -30,6 +31,7 @@ namespace MagicSorter.Models
         /// Container label aliases
         /// Key: alias (e.g., "guns"), Value: canonical category name (e.g., "weapons")
         /// </summary>
+        [JsonProperty("aliases")]
         public Dictionary<string, string> ContainerAliases { get; set; }
             = new Dictionary<string, string>(System.StringComparer.OrdinalIgnoreCase);
 
@@ -104,6 +106,53 @@ namespace MagicSorter.Models
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Converts all dictionaries to case-insensitive versions.
+        /// Call this after JSON deserialization since Newtonsoft creates new dictionary instances.
+        /// </summary>
+        public void NormalizeDictionaries()
+        {
+            if (Categories != null && Categories.Count > 0)
+            {
+                var newCategories = new Dictionary<string, CategoryDefinition>(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var kvp in Categories)
+                    newCategories[kvp.Key] = kvp.Value;
+                Categories = newCategories;
+            }
+
+            if (Items != null && Items.Count > 0)
+            {
+                var newItems = new Dictionary<string, List<string>>(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var kvp in Items)
+                    newItems[kvp.Key] = kvp.Value;
+                Items = newItems;
+            }
+
+            if (ContainerAliases != null && ContainerAliases.Count > 0)
+            {
+                var newAliases = new Dictionary<string, string>(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var kvp in ContainerAliases)
+                    newAliases[kvp.Key] = kvp.Value;
+                ContainerAliases = newAliases;
+            }
+
+            if (Tags != null && Tags.Count > 0)
+            {
+                var newTags = new Dictionary<string, List<string>>(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var kvp in Tags)
+                    newTags[kvp.Key] = kvp.Value;
+                Tags = newTags;
+            }
+
+            if (CategoryFallbacks != null && CategoryFallbacks.Count > 0)
+            {
+                var newFallbacks = new Dictionary<string, string>(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var kvp in CategoryFallbacks)
+                    newFallbacks[kvp.Key] = kvp.Value;
+                CategoryFallbacks = newFallbacks;
+            }
         }
     }
 }
