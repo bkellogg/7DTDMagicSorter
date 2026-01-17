@@ -44,14 +44,12 @@ namespace MagicSorter.Services
             if (patternCategories.Count > 0) return patternCategories;
 
             // Fall back to built-in Groups if enabled
-            if (_config.FallbackToBuiltIn)
-            {
-                var groups = itemStack.itemValue.ItemClass.Groups;
-                if (groups != null && groups.Length > 0)
-                    foreach (var group in groups)
-                        if (!string.IsNullOrEmpty(group))
-                            result.Add(group);
-            }
+            if (!_config.FallbackToBuiltIn)
+                return result;
+
+            var groups = itemStack.itemValue.ItemClass.Groups;
+            if (groups != null)
+                result.AddRange(groups.Where(g => !string.IsNullOrEmpty(g)));
 
             return result;
         }
@@ -59,7 +57,7 @@ namespace MagicSorter.Services
         /// <summary>
         ///     Gets categories based on item name patterns (e.g., gunHandgun* -> pistols)
         /// </summary>
-        private List<string> GetCategoriesFromPattern(string itemName)
+        private static List<string> GetCategoriesFromPattern(string itemName)
         {
             if (string.IsNullOrEmpty(itemName))
                 return new List<string>();
@@ -93,9 +91,8 @@ namespace MagicSorter.Services
                 return new List<string> { "weapons", "ranged", "rifles" };
             if (itemName.StartsWith("gunMG", StringComparison.OrdinalIgnoreCase))
                 return new List<string> { "weapons", "ranged", "machineguns" };
-            if (itemName.StartsWith("gunBow", StringComparison.OrdinalIgnoreCase))
-                return new List<string> { "weapons", "ranged", "bows" };
-            if (itemName.StartsWith("gunCrossbow", StringComparison.OrdinalIgnoreCase))
+            if (itemName.StartsWith("gunBow", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("gunCrossbow", StringComparison.OrdinalIgnoreCase))
                 return new List<string> { "weapons", "ranged", "bows" };
             if (itemName.StartsWith("gunExplosives", StringComparison.OrdinalIgnoreCase) ||
                 itemName.StartsWith("gunRocketLauncher", StringComparison.OrdinalIgnoreCase))
@@ -118,20 +115,16 @@ namespace MagicSorter.Services
                 return new List<string> { "building", "lighting" };
             if (itemName.StartsWith("meleeToolPick", StringComparison.OrdinalIgnoreCase))
                 return new List<string> { "tools", "miningtools" };
-            if (itemName.StartsWith("meleeToolAxe", StringComparison.OrdinalIgnoreCase))
+            if (itemName.StartsWith("meleeToolAxe", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("meleeToolShovel", StringComparison.OrdinalIgnoreCase))
                 return new List<string> { "tools", "harvestingtools" };
-            if (itemName.StartsWith("meleeToolShovel", StringComparison.OrdinalIgnoreCase))
-                return new List<string> { "tools", "harvestingtools" };
-            if (itemName.StartsWith("meleeToolRepair", StringComparison.OrdinalIgnoreCase))
-                return new List<string> { "tools", "repairtools" };
-            if (itemName.StartsWith("meleeToolSalvage", StringComparison.OrdinalIgnoreCase))
+            if (itemName.StartsWith("meleeToolRepair", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("meleeToolSalvage", StringComparison.OrdinalIgnoreCase))
                 return new List<string> { "tools", "repairtools" };
 
             // Tool items (workstations, cooking, etc.)
             if (itemName.StartsWith("toolForge", StringComparison.OrdinalIgnoreCase))
                 return new List<string> { "building", "workstations" };
-            if (itemName.StartsWith("toolCooking", StringComparison.OrdinalIgnoreCase))
-                return new List<string> { "tools" };
             if (itemName.StartsWith("tool", StringComparison.OrdinalIgnoreCase))
                 return new List<string> { "tools" };
 
@@ -592,31 +585,12 @@ namespace MagicSorter.Services
         /// </summary>
         public bool HasPatternMatch(string itemName)
         {
-            if (string.IsNullOrEmpty(itemName))
-                return false;
-
-            var categories = GetCategoriesFromPattern(itemName);
-            return categories.Count > 0;
+            return !string.IsNullOrEmpty(itemName) && GetCategoriesFromPattern(itemName).Count > 0;
         }
 
-        /// <summary>
-        ///     Resolves a container label alias to canonical form
-        /// </summary>
-        public string ResolveAlias(string label)
+        private static int GetCategorySpecificity(MappingData mappings, string category)
         {
-            if (string.IsNullOrEmpty(label))
-                return label;
-
-            var mappings = _mappingLoader?.GetMappings();
-            if (mappings != null) return mappings.ResolveAlias(label);
-
-            return label;
-        }
-
-        private int GetCategorySpecificity(MappingData mappings, string category)
-        {
-            if (mappings != null) return mappings.GetSpecificity(category);
-            return 50; // Default specificity
+            return mappings?.GetSpecificity(category) ?? 50;
         }
 
         private class ContainerCandidate

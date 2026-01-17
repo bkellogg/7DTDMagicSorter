@@ -92,7 +92,7 @@ namespace MagicSorter
             }
         }
 
-        private void ReloadMappings()
+        private static void ReloadMappings()
         {
             Log.Out("[MagicSorter] Reloading mappings...");
 

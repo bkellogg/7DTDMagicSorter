@@ -152,23 +152,22 @@ namespace MagicSorter.Services
                 var json = File.ReadAllText(localPath);
                 var mappings = JsonConvert.DeserializeObject<MappingData>(json);
 
-                if (mappings != null && (mappings.Categories.Count > 0 || mappings.Items.Count > 0))
-                {
-                    mappings.NormalizeDictionaries();
-                    lock (_lock)
-                    {
-                        _currentMappings = mappings;
-                    }
+                if (mappings == null || (mappings.Categories.Count == 0 && mappings.Items.Count == 0))
+                    return false;
 
-                    return true;
+                mappings.NormalizeDictionaries();
+                lock (_lock)
+                {
+                    _currentMappings = mappings;
                 }
+
+                return true;
             }
             catch (Exception ex)
             {
                 Log.Warning($"[MagicSorter] Failed to load local mappings: {ex.Message}");
+                return false;
             }
-
-            return false;
         }
 
         private bool TryLoadFromCache()
@@ -187,24 +186,23 @@ namespace MagicSorter.Services
                 var json = File.ReadAllText(cachePath);
                 var mappings = JsonConvert.DeserializeObject<MappingData>(json);
 
-                if (mappings != null && (mappings.Categories.Count > 0 || mappings.Items.Count > 0))
-                {
-                    mappings.NormalizeDictionaries();
-                    lock (_lock)
-                    {
-                        _currentMappings = mappings;
-                        _lastFetchTime = File.GetLastWriteTime(cachePath);
-                    }
+                if (mappings == null || (mappings.Categories.Count == 0 && mappings.Items.Count == 0))
+                    return false;
 
-                    return true;
+                mappings.NormalizeDictionaries();
+                lock (_lock)
+                {
+                    _currentMappings = mappings;
+                    _lastFetchTime = File.GetLastWriteTime(cachePath);
                 }
+
+                return true;
             }
             catch (Exception ex)
             {
                 Log.Warning($"[MagicSorter] Failed to load cached mappings: {ex.Message}");
+                return false;
             }
-
-            return false;
         }
 
         private bool FetchRemote()
@@ -302,6 +300,12 @@ namespace MagicSorter.Services
             {
                 var cachePath = GetCachePath();
                 var cacheDir = Path.GetDirectoryName(cachePath);
+
+                if (cacheDir == null)
+                {
+                    Log.Warning("[MagicSorter] Cache directory not found");
+                    return;
+                }
 
                 if (!Directory.Exists(cacheDir)) Directory.CreateDirectory(cacheDir);
 
