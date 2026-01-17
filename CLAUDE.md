@@ -23,8 +23,34 @@ Filter for MagicSorter entries and errors (with 2 lines of context):
 powershell -Command "Get-Content 'C:\\Users\\brend\\AppData\\Roaming\\7DaysToDie\\logs\\<LOG_FILE>.txt' | Select-String -Pattern 'MagicSorter|Exception|Error' -Context 2,2 | Select-Object -First 50"
 ```
 ## Coding Style
-- Prefer guard style if clauses that exit early. That is, reduce nesting where possible.
 
+### General
+- Prefer guard style if clauses that exit early to reduce nesting
+
+### C# Version Constraints
+- Project targets .NET Framework 4.8 which uses C# 7.3
+- Do NOT use C# 8.0+ features:
+  - `is not` pattern → use `!(x is Y)`
+  - `is { }` pattern → use `!= null`
+  - Null-coalescing assignment `??=`
+  - Switch expressions
+
+### Pattern Matching in CategoryResolver
+- Order matters: more specific patterns must come BEFORE general ones
+- Example: check for "Schematic" before "planted" (plantedGraceCorn1Schematic is a schematic, not farming)
+- When adding new patterns, consider items that might match multiple patterns
+
+### JSON Deserialization (Newtonsoft.Json)
+- Properties that come from JSON need `{ get; set; }` (not readonly)
+- Use `[JsonProperty("name")]` for different JSON key names
+- Call `NormalizeDictionaries()` after deserialization for case-insensitive lookups
+
+### Game Engine Integration
+- Classes instantiated by the game (IModApi, ConsoleCmdAbstract) need:
+  ```csharp
+  [SuppressMessage("ReSharper", "UnusedType.Global")]
+  ```
+- Classes instantiated by JSON deserializer need similar suppression for "ClassNeverInstantiated"
 
 ## Project Structure
 - `MagicSorterMod.cs` - IModApi entry point (auto-discovered by game)
