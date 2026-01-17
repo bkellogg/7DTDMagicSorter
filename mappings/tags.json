@@ -1,9 +1,0 @@
-{
-  "combat": ["weapons", "ranged", "melee", "pistols", "rifles", "shotguns", "smgs", "machineguns", "explosives", "bows", "blades", "clubs", "spears", "sledges", "knuckles", "ammo"],
-  "survival": ["food", "medical", "tools", "armor", "clothing"],
-  "crafting": ["resources", "rawresources", "craftedresources", "electrical", "chemicals", "organic", "mechanical"],
-  "base": ["building", "blocks", "doors", "traps", "lighting", "storage", "workstations", "furniture", "decorations"],
-  "transport": ["vehicles", "vehicleparts", "vehiclemods"],
-  "upgrades": ["mods", "weaponmods", "armormods", "scopemods", "barrelsmods", "grips"],
-  "learning": ["books", "schematics", "skillbooks"]
-}
