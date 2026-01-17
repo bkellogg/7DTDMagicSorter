@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<ModInfo>
-    <Name value="MagicSorter" />
-    <DisplayName value="Magic Sorter" />
-    <Description value="Automatically sort items from a designated container into categorized storage boxes" />
-    <Author value="brend" />
-    <Version value="0.1.0" />
-</ModInfo>

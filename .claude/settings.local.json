@@ -23,7 +23,8 @@
       "Bash(git restore:*)",
       "Bash(\"C:\\\\Users\\\\brend\\\\Downloads\\\\JetBrains.ReSharper.CommandLineTools.2025.3.1\\\\inspectcode.exe\" \"7DTDMagicSorter.csproj\" -o=\"inspection-results.xml\" --no-build)",
       "Bash(\"C:\\\\Users\\\\brend\\\\Downloads\\\\JetBrains.ReSharper.CommandLineTools.2025.3.1\\\\inspectcode.exe\" \"7DTDMagicSorter.csproj\" -o=\"inspection-results.xml\" --toolset=17.0)",
-      "Bash(\"C:\\\\Users\\\\brend\\\\Downloads\\\\JetBrains.ReSharper.CommandLineTools.2025.3.1\\\\inspectcode.exe\" \"C:\\\\Users\\\\brend\\\\Documents\\\\projects\\\\7DTDMagicSorter\\\\7DTDMagicSorter.sln\" -o=\"C:\\\\Users\\\\brend\\\\Documents\\\\projects\\\\7DTDMagicSorter\\\\inspection-results.xml\")"
+      "Bash(\"C:\\\\Users\\\\brend\\\\Downloads\\\\JetBrains.ReSharper.CommandLineTools.2025.3.1\\\\inspectcode.exe\" \"C:\\\\Users\\\\brend\\\\Documents\\\\projects\\\\7DTDMagicSorter\\\\7DTDMagicSorter.sln\" -o=\"C:\\\\Users\\\\brend\\\\Documents\\\\projects\\\\7DTDMagicSorter\\\\inspection-results.xml\")",
+      "Bash(git clean:*)"
     ]
   }
 }
