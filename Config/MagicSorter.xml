@@ -8,19 +8,6 @@
 <MagicSorter>
 
     <!--
-      URL to fetch remote category mappings from.
-      Leave empty to use only local mappings or built-in Groups.
-      Example: https://raw.githubusercontent.com/youruser/repo/main/mappings.json
-    -->
-    <RemoteMappingsUrl></RemoteMappingsUrl>
-
-    <!--
-      How many hours to cache remote mappings before refreshing.
-      Default: 24
-    -->
-    <CacheDurationHours>24</CacheDurationHours>
-
-    <!--
       Whether to fall back to the game's built-in Groups system
       when an item is not found in the mappings.
       Default: true
@@ -49,11 +36,5 @@
       Default: false
     -->
     <DebugLogging>false</DebugLogging>
-
-    <!--
-      Connection timeout in seconds for fetching remote mappings.
-      Default: 10
-    -->
-    <ConnectionTimeoutSeconds>10</ConnectionTimeoutSeconds>
 
 </MagicSorter>

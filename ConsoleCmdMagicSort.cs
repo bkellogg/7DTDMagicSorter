@@ -16,7 +16,7 @@ namespace MagicSorter
 
         public override string getDescription()
         {
-            return "Magic sort manager. Usage: ms <sort|list|plan|reload|config|mappings> [range]";
+            return "Magic sort manager. Usage: ms <sort|list|plan|config|mappings> [range]";
         }
 
         public override void Execute(List<string> args, CommandSenderInfo senderInfo)
@@ -32,9 +32,6 @@ namespace MagicSorter
             // Handle commands that don't need a player
             switch (subcommand)
             {
-                case "reload":
-                    ReloadMappings();
-                    return;
                 case "config":
                     ShowConfig();
                     return;
@@ -97,23 +94,6 @@ namespace MagicSorter
             }
         }
 
-        private static void ReloadMappings()
-        {
-            Log.Out("[MagicSorter] Reloading mappings...");
-
-            var loader = MagicSorterMod.MappingLoader;
-            if (loader == null)
-            {
-                Log.Error("[MagicSorter] Mapping loader not initialized");
-                return;
-            }
-
-            if (loader.ForceRefresh())
-                Log.Out("[MagicSorter] Mappings reloaded successfully");
-            else
-                Log.Warning("[MagicSorter] Failed to reload mappings - using existing");
-        }
-
         private static void ShowConfig()
         {
             var config = MagicSorterMod.Config;
@@ -124,14 +104,10 @@ namespace MagicSorter
             }
 
             Log.Out("[MagicSorter] Current configuration:");
-            Log.Out(
-                $"  RemoteMappingsUrl: {(string.IsNullOrEmpty(config.RemoteMappingsUrl) ? "(not set)" : config.RemoteMappingsUrl)}");
-            Log.Out($"  CacheDurationHours: {config.CacheDurationHours}");
             Log.Out($"  FallbackToBuiltIn: {config.FallbackToBuiltIn}");
             Log.Out($"  UseSpecificityResolution: {config.UseSpecificityResolution}");
             Log.Out($"  DefaultRange: {config.DefaultRange}");
             Log.Out($"  DebugLogging: {config.DebugLogging}");
-            Log.Out($"  ConnectionTimeoutSeconds: {config.ConnectionTimeoutSeconds}");
         }
 
         private static void ShowMappings()
@@ -172,7 +148,6 @@ namespace MagicSorter
             Log.Out("  suggest  - Show unsortable items and suggested containers");
             Log.Out("  invalid  - Show containers with invalid/unknown labels");
             Log.Out("  debug    - Show internal item names for mapping");
-            Log.Out("  reload   - Force reload mappings from remote URL");
             Log.Out("  config   - Show current configuration");
             Log.Out("  mappings - Show loaded mappings status");
             Log.Out($"  [range]  - Optional search radius (default: {defaultRange})");

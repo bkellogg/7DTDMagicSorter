@@ -39,12 +39,12 @@ namespace MagicSorter
             Config = ConfigurationLoader.Load(ModPath);
 
             // Initialize mapping loader
-            MappingLoader = new MappingLoader(ModPath, Config);
+            MappingLoader = new MappingLoader(ModPath);
 
             // Initialize category resolver
             Resolver = new CategoryResolver(MappingLoader, Config);
 
-            // Start loading mappings (local first, then async remote)
+            // Load mappings from local file
             MappingLoader.Initialize();
 
             Log.Out("[MagicSorter] Mod loaded successfully.");

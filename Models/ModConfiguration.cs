@@ -6,16 +6,6 @@ namespace MagicSorter.Models
     public class ModConfiguration
     {
         /// <summary>
-        ///     URL to fetch remote category mappings from
-        /// </summary>
-        public string RemoteMappingsUrl { get; set; } = "";
-
-        /// <summary>
-        ///     Hours before cached mappings expire and need refresh
-        /// </summary>
-        public int CacheDurationHours { get; set; } = 24;
-
-        /// <summary>
         ///     Whether to fall back to built-in Groups matching when item not in mappings
         /// </summary>
         public bool FallbackToBuiltIn { get; set; } = true;
@@ -34,10 +24,5 @@ namespace MagicSorter.Models
         ///     Whether to show verbose debug logging
         /// </summary>
         public bool DebugLogging { get; set; }
-
-        /// <summary>
-        ///     Connection timeout in seconds for remote fetch
-        /// </summary>
-        public int ConnectionTimeoutSeconds { get; set; } = 10;
     }
 }

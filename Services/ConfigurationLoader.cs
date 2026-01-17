@@ -41,15 +41,11 @@ namespace MagicSorter.Services
                 }
 
                 // Parse each setting
-                config.RemoteMappingsUrl = GetNodeValue(root, "RemoteMappingsUrl", config.RemoteMappingsUrl);
-                config.CacheDurationHours = GetNodeValueInt(root, "CacheDurationHours", config.CacheDurationHours);
                 config.FallbackToBuiltIn = GetNodeValueBool(root, "FallbackToBuiltIn", config.FallbackToBuiltIn);
                 config.UseSpecificityResolution =
                     GetNodeValueBool(root, "UseSpecificityResolution", config.UseSpecificityResolution);
                 config.DefaultRange = GetNodeValueInt(root, "DefaultRange", config.DefaultRange);
                 config.DebugLogging = GetNodeValueBool(root, "DebugLogging", config.DebugLogging);
-                config.ConnectionTimeoutSeconds =
-                    GetNodeValueInt(root, "ConnectionTimeoutSeconds", config.ConnectionTimeoutSeconds);
 
                 Log.Out("[MagicSorter] Configuration loaded successfully");
             }
