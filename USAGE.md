@@ -36,17 +36,116 @@ Open the F1 console and type:
 | `ms scan` | Show items grouped by category |
 | `ms missing` | Show categories that need containers |
 
-## Common Categories
+## Category Reference
 
-**Combat:** Weapons, Ammo, Armor, Mods
+Items go to the **most specific** matching container. If you only want a few containers, use the broad categories (Weapons, Food, Resources, etc.) and items will automatically go there.
 
-**Survival:** Food, Medicine, Tools, Clothing
+### Weapons
+```
+Weapons
+├── Ranged ─── Pistols, Rifles, Shotguns, SMGs, MachineGuns, Bows
+├── Melee ──── Blades, Clubs, Spears, Sledges, Knuckles
+└── Explosives (grenades, rockets)
+```
+Aliases: `Guns` → Ranged, `Handguns` → Pistols, `Snipers` → Rifles
 
-**Resources:** Resources, Electrical, Mechanical, Chemicals
+### Ammo
+```
+Ammo
+├── Ammo9mm, Ammo44, Ammo762
+├── AmmoShotgun, AmmoArrow, AmmoRocket
+```
+Aliases: `Bullets` → Ammo, `Shells` → AmmoShotgun, `Arrows` → AmmoArrow
 
-**Building:** Building, Traps, Lighting, Workstations
+### Armor & Clothing
+```
+Armor ─── ArmorHead, ArmorChest, ArmorLegs, ArmorBoots, ArmorGloves
+Clothing ─── ClothingHead, ClothingChest, ClothingLegs, ClothingFeet, Eyewear
+```
+Aliases: `Helmets` → ArmorHead, `Glasses` → Eyewear
 
-**Other:** Books, Vehicles, Treasure
+### Food & Drinks
+```
+Food
+├── CookedFood, RawFood, CannedFood
+├── Drinks
+└── Farming (seeds)
+```
+Aliases: `Meals` → CookedFood, `Water` → Drinks, `Seeds` → Farming
+
+### Medical
+```
+Medical
+├── FirstAid (bandages, kits)
+├── Medicine (antibiotics, painkillers)
+└── Buffs (vitamins, steroids)
+```
+Aliases: `Meds` → Medical, `Bandages` → FirstAid
+
+### Resources
+```
+Resources
+├── RawResources (stone, iron, wood)
+├── CraftedResources (forged iron, steel)
+├── Electrical (wiring, batteries, relays)
+├── Mechanical (engines, parts)
+├── Chemicals (acid, gas)
+└── Organic (leather, cloth, bones)
+```
+Aliases: `Electronics` → Electrical, `Parts` → Mechanical, `From Earth` → RawResources, `From Animals` → Organic, `Man Made` → CraftedResources
+
+### Building
+```
+Building
+├── Workstations (forge, workbench, chemistry)
+├── Lighting (torches, lights)
+├── Traps (spikes, turrets)
+├── Doors (doors, hatches, gates)
+├── Storage, Furniture, Decorations
+```
+Aliases: `Lights` → Lighting, `Forges` → Workstations
+
+### Tools
+```
+Tools
+├── MiningTools (pickaxe, auger)
+├── HarvestingTools (axe, shovel)
+├── RepairTools (wrench)
+└── ConstructionTools (nailgun)
+```
+Aliases: `Mining` → MiningTools, `Wrenches` → RepairTools
+
+### Mods
+```
+Mods
+├── WeaponMods ─── ScopeMods, BarrelMods, Grips
+└── ArmorMods
+```
+Aliases: `Attachments` → Mods, `Scopes` → ScopeMods
+
+### Vehicles
+```
+Vehicles
+├── VehicleParts
+└── VehicleMods
+```
+Aliases: `Bikes` → Vehicles, `Tires` → VehicleParts
+
+### Books
+```
+Books
+├── Schematics (recipes)
+└── SkillBooks (magazines)
+```
+Aliases: `Recipes` → Schematics, `Magazines` → SkillBooks
+
+### Other
+```
+Treasure ─── TreasureMaps, Dukes
+Junk (scrap items)
+Unknown (fallback for uncategorized items)
+```
+Aliases: `Money` → Dukes, `Coins` → Dukes, `Trash` → Junk
 
 ## Tips
 
