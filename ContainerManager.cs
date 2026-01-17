@@ -19,9 +19,11 @@ namespace MagicSorter
         private readonly int _range;
         private readonly CategoryResolver _resolver;
 
-        private readonly Dictionary<string, int> _sortedCounts = new Dictionary<string, int>();
+        private readonly Dictionary<string, List<string>> _sortedItems =
+            new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+
+        private readonly List<string> _failedItems = new List<string>();
         private readonly World _world;
-        private int _failedCount;
 
         public ContainerManager(EntityPlayer player, int range)
         {
@@ -886,6 +888,7 @@ namespace MagicSorter
                 if (itemStack.IsEmpty()) continue;
 
                 var itemName = GetItemName(itemStack);
+                var itemDesc = $"{itemName} x{itemStack.count}";
                 var categories = GetItemCategories(itemStack);
 
                 // Try to find a matching container
@@ -903,14 +906,12 @@ namespace MagicSorter
                         var matchingCategory = FindMatchingCategory(categories, categoryContainers);
 
                         if (matchingCategory != null)
-                            Log.Warning($"[MagicSorter] Failed to move {itemName}: [ms:{matchingCategory}] is full");
+                            _failedItems.Add($"{itemDesc} → [ms:{matchingCategory}] is full");
                         else if (categories.Count == 0)
-                            Log.Warning(
-                                $"[MagicSorter] Failed to move {itemName}: unknown category and no [ms:Unknown] container");
+                            _failedItems.Add($"{itemDesc} → no category, no [ms:Unknown]");
                         else
-                            Log.Warning(
-                                $"[MagicSorter] Failed to move {itemName}: no container for category [{string.Join(", ", categories)}]");
-                        _failedCount++;
+                            _failedItems.Add(
+                                $"{itemDesc} → no container for [{string.Join(", ", categories)}]");
                         continue;
                     }
                 }
@@ -918,14 +919,13 @@ namespace MagicSorter
                 // Try to move the item
                 if (TryMoveItem(sortMe, i, targetContainer, itemStack, out var targetCategory))
                 {
-                    if (!_sortedCounts.ContainsKey(targetCategory)) _sortedCounts[targetCategory] = 0;
-                    _sortedCounts[targetCategory]++;
+                    if (!_sortedItems.ContainsKey(targetCategory))
+                        _sortedItems[targetCategory] = new List<string>();
+                    _sortedItems[targetCategory].Add(itemDesc);
                 }
                 else
                 {
-                    Log.Warning(
-                        $"[MagicSorter] Failed to move {itemName}: no space in [ms:{targetCategory}] containers");
-                    _failedCount++;
+                    _failedItems.Add($"{itemDesc} → [ms:{targetCategory}] no space");
                 }
             }
         }
@@ -1108,9 +1108,9 @@ namespace MagicSorter
 
         private void LogSummary()
         {
-            var totalSorted = _sortedCounts.Values.Sum();
+            var totalSorted = _sortedItems.Values.Sum(list => list.Count);
 
-            if (totalSorted == 0 && _failedCount == 0)
+            if (totalSorted == 0 && _failedItems.Count == 0)
             {
                 Log.Out("[MagicSorter] Nothing to sort - [MagicSort] is empty");
                 return;
@@ -1118,12 +1118,23 @@ namespace MagicSorter
 
             if (totalSorted > 0)
             {
-                var breakdown = string.Join(", ", _sortedCounts.Select(kvp => $"{kvp.Value} to [ms:{kvp.Key}]"));
-                Log.Out($"[MagicSorter] Sorted {totalSorted} items: {breakdown}");
+                Log.Out("[MagicSorter] Sort complete - items sorted as follows:");
+                foreach (var kvp in _sortedItems.OrderBy(k => k.Key))
+                {
+                    Log.Out($"  [ms:{kvp.Key}]:");
+                    foreach (var item in kvp.Value)
+                        Log.Out($"    - {item}");
+                }
             }
 
-            if (_failedCount > 0)
-                Log.Out($"[MagicSorter] {_failedCount} items could not be moved (see warnings above)");
+            if (_failedItems.Count > 0)
+            {
+                Log.Out("  Failed to sort:");
+                foreach (var item in _failedItems)
+                    Log.Out($"    - {item}");
+            }
+
+            Log.Out($"[MagicSorter] Summary: {totalSorted} items sorted, {_failedItems.Count} failed");
         }
 
         private object GetCompositeModule(TileEntityComposite composite, string moduleName)
