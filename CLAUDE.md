@@ -26,11 +26,6 @@ powershell -Command "Get-Content 'C:\\Users\\brend\\AppData\\Roaming\\7DaysToDie
 - Prefer guard style if clauses that exit early. That is, reduce nesting where possible.
 
 
-## Debug Folder
-The `debug/` folder contains screenshots and images used for debugging during development:
-- `current_containers.png` - Screenshot showing the test container setup
-- `no-sortme-in-range-but-its-in-range.jpg` - Screenshot from debugging container detection
-
 ## Project Structure
 - `MagicSorterMod.cs` - IModApi entry point (auto-discovered by game)
 - `ConsoleCmdMagicSort.cs` - Console command `magicsort` or `ms` with subcommands (sort, list, preview)
@@ -46,17 +41,14 @@ The `debug/` folder contains screenshots and images used for debugging during de
   - Sign text is in `TEFeatureSignable.signText` (AuthoredText type)
   - Items accessed via reflection on TEFeatureStorage module
 
-### Current Status
-Working on: Getting items from TileEntityComposite containers. The container is being detected but `GetItems()` returns null. Need to investigate how TEFeatureStorage stores items - may need to check game code or other mods for the correct field/method name.
-
 ### Testing
 1. Build the mod (command above)
 2. Launch 7 Days to Die
 3. Load into a game world
-4. Place storage crates and rename them with signs: `[SortMe]` for input, `[Sort:CategoryName]` for output
+4. Place storage crates and rename them with signs: `[MagicSort]` for input, `[ms:CategoryName]` for output
 5. Open F1 console and run:
    - `ms list` - List containers found
-   - `ms preview` - Preview what would be sorted where
+   - `ms plan` - Preview what would be sorted where
    - `ms sort` - Actually sort items
 6. Check F1 console for `[MagicSorter]` log output
 
