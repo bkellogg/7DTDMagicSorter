@@ -62,6 +62,12 @@ namespace MagicSorter.Services
             if (string.IsNullOrEmpty(itemName))
                 return new List<string>();
 
+            // Schematics - check EARLY because some schematics have misleading prefixes
+            // (e.g., plantedGraceCorn1Schematic starts with "planted" but is a schematic)
+            if (itemName.StartsWith("schematic", StringComparison.OrdinalIgnoreCase) ||
+                itemName.IndexOf("Schematic", StringComparison.OrdinalIgnoreCase) >= 0)
+                return new List<string> { "books", "schematics" };
+
             // Weapon/gun parts - check BEFORE weapon patterns (e.g., gunRocketLauncherParts, gunShotgunParts)
             if (itemName.IndexOf("Parts", StringComparison.OrdinalIgnoreCase) >= 0 &&
                 (itemName.StartsWith("gun", StringComparison.OrdinalIgnoreCase) ||
@@ -219,9 +225,7 @@ namespace MagicSorter.Services
             if (itemName.StartsWith("vehicle", StringComparison.OrdinalIgnoreCase))
                 return new List<string> { "vehicles", "vehicleparts" };
 
-            // Books and schematics
-            if (itemName.StartsWith("schematic", StringComparison.OrdinalIgnoreCase))
-                return new List<string> { "books", "schematics" };
+            // Books (schematics already handled at top of function)
             if (itemName.StartsWith("book", StringComparison.OrdinalIgnoreCase) ||
                 itemName.StartsWith("perkBook", StringComparison.OrdinalIgnoreCase))
                 return new List<string> { "books", "skillbooks" };
