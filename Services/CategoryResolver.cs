@@ -6,12 +6,12 @@ using MagicSorter.Models;
 namespace MagicSorter.Services
 {
     /// <summary>
-    /// Resolves item categories and finds best matching containers using specificity
+    ///     Resolves item categories and finds best matching containers using specificity
     /// </summary>
     public class CategoryResolver
     {
-        private readonly MappingLoader _mappingLoader;
         private readonly ModConfiguration _config;
+        private readonly MappingLoader _mappingLoader;
 
         public CategoryResolver(MappingLoader mappingLoader, ModConfiguration config)
         {
@@ -20,7 +20,7 @@ namespace MagicSorter.Services
         }
 
         /// <summary>
-        /// Gets categories for an item, checking mappings first, then patterns, then falling back to Groups
+        ///     Gets categories for an item, checking mappings first, then patterns, then falling back to Groups
         /// </summary>
         public List<string> GetItemCategories(ItemStack itemStack)
         {
@@ -36,40 +36,28 @@ namespace MagicSorter.Services
             if (mappings != null)
             {
                 var mappedCategories = mappings.GetItemCategories(itemName);
-                if (mappedCategories.Count > 0)
-                {
-                    return mappedCategories;
-                }
+                if (mappedCategories.Count > 0) return mappedCategories;
             }
 
             // Second, try pattern-based matching on item name
             var patternCategories = GetCategoriesFromPattern(itemName);
-            if (patternCategories.Count > 0)
-            {
-                return patternCategories;
-            }
+            if (patternCategories.Count > 0) return patternCategories;
 
             // Fall back to built-in Groups if enabled
             if (_config.FallbackToBuiltIn)
             {
                 var groups = itemStack.itemValue.ItemClass.Groups;
                 if (groups != null && groups.Length > 0)
-                {
                     foreach (var group in groups)
-                    {
                         if (!string.IsNullOrEmpty(group))
-                        {
                             result.Add(group);
-                        }
-                    }
-                }
             }
 
             return result;
         }
 
         /// <summary>
-        /// Gets categories based on item name patterns (e.g., gunHandgun* -> pistols)
+        ///     Gets categories based on item name patterns (e.g., gunHandgun* -> pistols)
         /// </summary>
         private List<string> GetCategoriesFromPattern(string itemName)
         {
@@ -402,7 +390,7 @@ namespace MagicSorter.Services
         }
 
         /// <summary>
-        /// Finds the best container for an item based on categories and specificity
+        ///     Finds the best container for an item based on categories and specificity
         /// </summary>
         /// <param name="itemCategories">Categories the item belongs to</param>
         /// <param name="categoryContainers">Map of category -> containers</param>
@@ -427,9 +415,7 @@ namespace MagicSorter.Services
                 {
                     var specificity = GetCategorySpecificity(mappings, category);
                     foreach (var container in containers)
-                    {
                         if (container.HasSpaceFor(itemStack))
-                        {
                             candidates.Add(new ContainerCandidate
                             {
                                 Container = container,
@@ -437,21 +423,18 @@ namespace MagicSorter.Services
                                 Category = category,
                                 IsExactMatch = true
                             });
-                        }
-                    }
                 }
 
                 // Try alias resolution (item category is an alias)
                 if (mappings != null)
                 {
                     var resolvedCategory = mappings.ResolveAlias(category);
-                    if (resolvedCategory != category && categoryContainers.TryGetValue(resolvedCategory, out var aliasContainers))
+                    if (resolvedCategory != category &&
+                        categoryContainers.TryGetValue(resolvedCategory, out var aliasContainers))
                     {
                         var specificity = GetCategorySpecificity(mappings, resolvedCategory);
                         foreach (var container in aliasContainers)
-                        {
                             if (container.HasSpaceFor(itemStack))
-                            {
                                 candidates.Add(new ContainerCandidate
                                 {
                                     Container = container,
@@ -459,8 +442,6 @@ namespace MagicSorter.Services
                                     Category = resolvedCategory,
                                     IsExactMatch = true
                                 });
-                            }
-                        }
                     }
 
                     // Try reverse alias (container label is an alias for item's category)
@@ -477,7 +458,6 @@ namespace MagicSorter.Services
                                     continue;
 
                                 if (container.HasSpaceFor(itemStack))
-                                {
                                     candidates.Add(new ContainerCandidate
                                     {
                                         Container = container,
@@ -485,7 +465,6 @@ namespace MagicSorter.Services
                                         Category = category,
                                         IsExactMatch = true
                                     });
-                                }
                             }
                         }
                     }
@@ -498,7 +477,6 @@ namespace MagicSorter.Services
 
             // If no direct matches, try fallback categories
             if (candidates.Count == 0 && mappings != null)
-            {
                 foreach (var category in itemCategories)
                 {
                     // First resolve alias (e.g., "Decor/Miscellaneous" -> "decorations")
@@ -508,9 +486,7 @@ namespace MagicSorter.Services
 
                     // If no fallback for resolved category, try original category too
                     if (fallbackChain.Count == 0 && resolvedCategory != category)
-                    {
                         fallbackChain = mappings.GetFallbackChain(category);
-                    }
                     foreach (var fallbackCategory in fallbackChain)
                     {
                         // Try exact match on fallback
@@ -518,9 +494,7 @@ namespace MagicSorter.Services
                         {
                             var specificity = GetCategorySpecificity(mappings, fallbackCategory);
                             foreach (var container in containers)
-                            {
                                 if (container.HasSpaceFor(itemStack))
-                                {
                                     candidates.Add(new ContainerCandidate
                                     {
                                         Container = container,
@@ -528,13 +502,12 @@ namespace MagicSorter.Services
                                         Category = fallbackCategory,
                                         IsExactMatch = false // Fallback is not exact
                                     });
-                                }
-                            }
                         }
 
                         // Try alias resolution on fallback
                         var resolvedFallback = mappings.ResolveAlias(fallbackCategory);
-                        if (resolvedFallback != fallbackCategory && categoryContainers.TryGetValue(resolvedFallback, out var aliasContainers))
+                        if (resolvedFallback != fallbackCategory &&
+                            categoryContainers.TryGetValue(resolvedFallback, out var aliasContainers))
                         {
                             var specificity = GetCategorySpecificity(mappings, resolvedFallback);
                             foreach (var container in aliasContainers)
@@ -543,7 +516,6 @@ namespace MagicSorter.Services
                                     continue;
 
                                 if (container.HasSpaceFor(itemStack))
-                                {
                                     candidates.Add(new ContainerCandidate
                                     {
                                         Container = container,
@@ -551,7 +523,6 @@ namespace MagicSorter.Services
                                         Category = resolvedFallback,
                                         IsExactMatch = false
                                     });
-                                }
                             }
                         }
 
@@ -569,7 +540,6 @@ namespace MagicSorter.Services
                                         continue;
 
                                     if (container.HasSpaceFor(itemStack))
-                                    {
                                         candidates.Add(new ContainerCandidate
                                         {
                                             Container = container,
@@ -577,7 +547,6 @@ namespace MagicSorter.Services
                                             Category = fallbackCategory,
                                             IsExactMatch = false
                                         });
-                                    }
                                 }
                             }
                         }
@@ -590,40 +559,36 @@ namespace MagicSorter.Services
                     if (candidates.Count > 0)
                         break;
                 }
-            }
 
             if (candidates.Count == 0)
                 return null;
 
             // Sort by: specificity (highest first), exact match (true first), fullness (fullest first)
             if (_config.UseSpecificityResolution)
-            {
                 candidates = candidates
                     .OrderByDescending(c => c.Specificity)
                     .ThenByDescending(c => c.IsExactMatch)
                     .ThenByDescending(c => c.Container.GetFullness())
                     .ToList();
-            }
             else
-            {
                 // Original behavior: prefer fullest container
                 candidates = candidates
                     .OrderByDescending(c => c.IsExactMatch)
                     .ThenByDescending(c => c.Container.GetFullness())
                     .ToList();
-            }
 
             if (_config.DebugLogging && candidates.Count > 0)
             {
                 var best = candidates[0];
-                Log.Out($"[MagicSorter] Best match: [{best.Category}] (specificity: {best.Specificity}, exact: {best.IsExactMatch})");
+                Log.Out(
+                    $"[MagicSorter] Best match: [{best.Category}] (specificity: {best.Specificity}, exact: {best.IsExactMatch})");
             }
 
             return candidates[0].Container;
         }
 
         /// <summary>
-        /// Checks if the item name matches any known patterns (used for debug output)
+        ///     Checks if the item name matches any known patterns (used for debug output)
         /// </summary>
         public bool HasPatternMatch(string itemName)
         {
@@ -635,7 +600,7 @@ namespace MagicSorter.Services
         }
 
         /// <summary>
-        /// Resolves a container label alias to canonical form
+        ///     Resolves a container label alias to canonical form
         /// </summary>
         public string ResolveAlias(string label)
         {
@@ -643,20 +608,14 @@ namespace MagicSorter.Services
                 return label;
 
             var mappings = _mappingLoader?.GetMappings();
-            if (mappings != null)
-            {
-                return mappings.ResolveAlias(label);
-            }
+            if (mappings != null) return mappings.ResolveAlias(label);
 
             return label;
         }
 
         private int GetCategorySpecificity(MappingData mappings, string category)
         {
-            if (mappings != null)
-            {
-                return mappings.GetSpecificity(category);
-            }
+            if (mappings != null) return mappings.GetSpecificity(category);
             return 50; // Default specificity
         }
 

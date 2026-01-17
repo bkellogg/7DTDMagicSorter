@@ -6,22 +6,22 @@ namespace MagicSorter
     public class MagicSorterMod : IModApi
     {
         /// <summary>
-        /// Path to the mod folder
+        ///     Path to the mod folder
         /// </summary>
-        public static string ModPath { get; private set; }
+        private static string ModPath { get; set; }
 
         /// <summary>
-        /// Global configuration instance
+        ///     Global configuration instance
         /// </summary>
         public static ModConfiguration Config { get; private set; }
 
         /// <summary>
-        /// Global mapping loader instance
+        ///     Global mapping loader instance
         /// </summary>
         public static MappingLoader MappingLoader { get; private set; }
 
         /// <summary>
-        /// Global category resolver instance
+        ///     Global category resolver instance
         /// </summary>
         public static CategoryResolver Resolver { get; private set; }
 

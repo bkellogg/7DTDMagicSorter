@@ -8,20 +8,19 @@ using Newtonsoft.Json;
 namespace MagicSorter.Services
 {
     /// <summary>
-    /// Handles loading, caching, and refreshing of category mappings
+    ///     Handles loading, caching, and refreshing of category mappings
     /// </summary>
     public class MappingLoader
     {
         private const string CacheFileName = "mappings_cache.json";
         private const string LocalMappingsFileName = "mappings.json";
+        private readonly ModConfiguration _config;
+        private readonly object _lock = new object();
 
         private readonly string _modPath;
-        private readonly ModConfiguration _config;
         private MappingData _currentMappings;
-        private DateTime _lastFetchTime;
-        private bool _isInitialized;
         private int _isFetching; // int for Interlocked operations (0 = false, 1 = true)
-        private readonly object _lock = new object();
+        private DateTime _lastFetchTime;
 
         public MappingLoader(string modPath, ModConfiguration config)
         {
@@ -31,30 +30,11 @@ namespace MagicSorter.Services
         }
 
         /// <summary>
-        /// Gets the currently loaded mappings
+        ///     Returns true if mappings have been loaded (from any source)
         /// </summary>
-        public MappingData GetMappings()
-        {
-            lock (_lock)
-            {
-                return _currentMappings;
-            }
-        }
+        public bool IsInitialized { get; private set; }
 
-        /// <summary>
-        /// Returns true if mappings have been loaded (from any source)
-        /// </summary>
-        public bool IsInitialized => _isInitialized;
-
-        /// <summary>
-        /// Returns true if currently fetching from remote
-        /// </summary>
-        public bool IsFetching => _isFetching != 0;
-
-        /// <summary>
-        /// Gets count of items in current mappings
-        /// </summary>
-        public int ItemCount
+        private int ItemCount
         {
             get
             {
@@ -65,10 +45,7 @@ namespace MagicSorter.Services
             }
         }
 
-        /// <summary>
-        /// Gets count of categories in current mappings
-        /// </summary>
-        public int CategoryCount
+        private int CategoryCount
         {
             get
             {
@@ -79,10 +56,7 @@ namespace MagicSorter.Services
             }
         }
 
-        /// <summary>
-        /// Gets the version of current mappings
-        /// </summary>
-        public string Version
+        private string Version
         {
             get
             {
@@ -94,22 +68,35 @@ namespace MagicSorter.Services
         }
 
         /// <summary>
-        /// Initializes mappings - tries local first, then starts async remote fetch
+        ///     Gets the currently loaded mappings
+        /// </summary>
+        public MappingData GetMappings()
+        {
+            lock (_lock)
+            {
+                return _currentMappings;
+            }
+        }
+
+        /// <summary>
+        ///     Initializes mappings - tries local first, then starts async remote fetch
         /// </summary>
         public void Initialize()
         {
             // First, try to load local mappings synchronously
             if (TryLoadLocalMappings())
             {
-                _isInitialized = true;
-                Log.Out($"[MagicSorter] Loaded local mappings (v{Version}, {CategoryCount} categories, {ItemCount} items)");
+                IsInitialized = true;
+                Log.Out(
+                    $"[MagicSorter] Loaded local mappings (v{Version}, {CategoryCount} categories, {ItemCount} items)");
             }
 
             // Then try cached mappings
             else if (TryLoadFromCache())
             {
-                _isInitialized = true;
-                Log.Out($"[MagicSorter] Loaded cached mappings (v{Version}, {CategoryCount} categories, {ItemCount} items)");
+                IsInitialized = true;
+                Log.Out(
+                    $"[MagicSorter] Loaded cached mappings (v{Version}, {CategoryCount} categories, {ItemCount} items)");
             }
 
             // Start async remote fetch if URL is configured
@@ -117,22 +104,16 @@ namespace MagicSorter.Services
             {
                 InitializeAsync();
             }
-            else if (!_isInitialized)
+            else if (!IsInitialized)
             {
                 Log.Out("[MagicSorter] No mappings loaded - will use built-in Groups fallback");
-                _isInitialized = true;
+                IsInitialized = true;
             }
         }
 
-        /// <summary>
-        /// Starts background fetch of remote mappings
-        /// </summary>
-        public void InitializeAsync()
+        private void InitializeAsync()
         {
-            if (string.IsNullOrEmpty(_config.RemoteMappingsUrl))
-            {
-                return;
-            }
+            if (string.IsNullOrEmpty(_config.RemoteMappingsUrl)) return;
 
             ThreadPool.QueueUserWorkItem(_ =>
             {
@@ -148,7 +129,7 @@ namespace MagicSorter.Services
         }
 
         /// <summary>
-        /// Forces a refresh of remote mappings (blocking)
+        ///     Forces a refresh of remote mappings (blocking)
         /// </summary>
         public bool ForceRefresh()
         {
@@ -164,10 +145,7 @@ namespace MagicSorter.Services
         private bool TryLoadLocalMappings()
         {
             var localPath = Path.Combine(_modPath, LocalMappingsFileName);
-            if (!File.Exists(localPath))
-            {
-                return false;
-            }
+            if (!File.Exists(localPath)) return false;
 
             try
             {
@@ -181,6 +159,7 @@ namespace MagicSorter.Services
                     {
                         _currentMappings = mappings;
                     }
+
                     return true;
                 }
             }
@@ -195,24 +174,16 @@ namespace MagicSorter.Services
         private bool TryLoadFromCache()
         {
             var cachePath = GetCachePath();
-            if (!File.Exists(cachePath))
-            {
-                return false;
-            }
+            if (!File.Exists(cachePath)) return false;
 
             try
             {
                 // Check if cache is expired
                 var cacheAge = DateTime.Now - File.GetLastWriteTime(cachePath);
-                if (cacheAge.TotalHours > _config.CacheDurationHours)
-                {
-                    if (_config.DebugLogging)
-                    {
-                        Log.Out($"[MagicSorter] Cache expired ({cacheAge.TotalHours:F1} hours old)");
-                    }
-                    // Still load it as fallback, but mark as needing refresh
-                }
+                if (cacheAge.TotalHours > _config.CacheDurationHours && _config.DebugLogging)
+                    Log.Out($"[MagicSorter] Cache expired ({cacheAge.TotalHours:F1} hours old)");
 
+                // Still load it as fallback, but mark as needing refresh
                 var json = File.ReadAllText(cachePath);
                 var mappings = JsonConvert.DeserializeObject<MappingData>(json);
 
@@ -224,6 +195,7 @@ namespace MagicSorter.Services
                         _currentMappings = mappings;
                         _lastFetchTime = File.GetLastWriteTime(cachePath);
                     }
+
                     return true;
                 }
             }
@@ -239,17 +211,12 @@ namespace MagicSorter.Services
         {
             // Atomically check and set _isFetching to prevent race conditions
             // CompareExchange returns the original value; if it was 0, we set it to 1 and proceed
-            if (Interlocked.CompareExchange(ref _isFetching, 1, 0) != 0)
-            {
-                return false; // Another thread is already fetching
-            }
+            if (Interlocked.CompareExchange(ref _isFetching, 1, 0) !=
+                0) return false; // Another thread is already fetching
 
             try
             {
-                if (_config.DebugLogging)
-                {
-                    Log.Out($"[MagicSorter] Fetching mappings from {_config.RemoteMappingsUrl}");
-                }
+                if (_config.DebugLogging) Log.Out($"[MagicSorter] Fetching mappings from {_config.RemoteMappingsUrl}");
 
                 // Use HttpWebRequest instead of WebClient for proper timeout support
                 var json = DownloadWithTimeout(_config.RemoteMappingsUrl, _config.ConnectionTimeoutSeconds * 1000);
@@ -278,8 +245,9 @@ namespace MagicSorter.Services
                 // Save to cache
                 SaveToCache(json);
 
-                _isInitialized = true;
-                Log.Out($"[MagicSorter] Loaded remote mappings (v{Version}, {CategoryCount} categories, {ItemCount} items)");
+                IsInitialized = true;
+                Log.Out(
+                    $"[MagicSorter] Loaded remote mappings (v{Version}, {CategoryCount} categories, {ItemCount} items)");
                 return true;
             }
             catch (WebException ex)
@@ -304,11 +272,11 @@ namespace MagicSorter.Services
         }
 
         /// <summary>
-        /// Downloads content from URL with proper timeout support using HttpWebRequest.
-        /// Unlike WebClient with background threads, this properly respects timeouts
-        /// without leaving orphaned downloads or leaking resources.
+        ///     Downloads content from URL with proper timeout support using HttpWebRequest.
+        ///     Unlike WebClient with background threads, this properly respects timeouts
+        ///     without leaving orphaned downloads or leaking resources.
         /// </summary>
-        private string DownloadWithTimeout(string url, int timeoutMs)
+        private static string DownloadWithTimeout(string url, int timeoutMs)
         {
             var request = (HttpWebRequest)WebRequest.Create(url);
             request.Timeout = timeoutMs;
@@ -319,10 +287,7 @@ namespace MagicSorter.Services
             using (var response = (HttpWebResponse)request.GetResponse())
             using (var stream = response.GetResponseStream())
             {
-                if (stream == null)
-                {
-                    return null;
-                }
+                if (stream == null) return null;
 
                 using (var reader = new StreamReader(stream))
                 {
@@ -338,17 +303,11 @@ namespace MagicSorter.Services
                 var cachePath = GetCachePath();
                 var cacheDir = Path.GetDirectoryName(cachePath);
 
-                if (!Directory.Exists(cacheDir))
-                {
-                    Directory.CreateDirectory(cacheDir);
-                }
+                if (!Directory.Exists(cacheDir)) Directory.CreateDirectory(cacheDir);
 
                 File.WriteAllText(cachePath, json);
 
-                if (_config.DebugLogging)
-                {
-                    Log.Out($"[MagicSorter] Saved mappings to cache: {cachePath}");
-                }
+                if (_config.DebugLogging) Log.Out($"[MagicSorter] Saved mappings to cache: {cachePath}");
             }
             catch (Exception ex)
             {
@@ -362,7 +321,7 @@ namespace MagicSorter.Services
         }
 
         /// <summary>
-        /// Gets status information about the mappings
+        ///     Gets status information about the mappings
         /// </summary>
         public string GetStatus()
         {
@@ -376,10 +335,7 @@ namespace MagicSorter.Services
                     status += $", Last fetch: {age.TotalHours:F1}h ago";
                 }
 
-                if (_isFetching != 0)
-                {
-                    status += " (fetching...)";
-                }
+                if (_isFetching != 0) status += " (fetching...)";
 
                 return status;
             }

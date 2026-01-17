@@ -22,7 +22,7 @@ namespace MagicSorter
                 return;
             }
 
-            string subcommand = args[0].ToLower();
+            var subcommand = args[0].ToLower();
 
             // Handle commands that don't need a player
             switch (subcommand)
@@ -39,21 +39,19 @@ namespace MagicSorter
             }
 
             // Get default range from config
-            int defaultRange = MagicSorterMod.Config?.DefaultRange ?? 20;
-            int range = defaultRange;
+            var defaultRange = MagicSorterMod.Config?.DefaultRange ?? 20;
+            var range = defaultRange;
 
             // Parse optional range argument
             if (args.Count > 1)
-            {
                 if (!int.TryParse(args[1], out range) || range <= 0)
                 {
-                    Log.Error("[MagicSorter] Invalid range. Usage: ms <sort|list|preview> [range]");
+                    Log.Error("[MagicSorter] Invalid range. Usage: ms <sort|list|plan> [range]");
                     return;
                 }
-            }
 
             // Get the player who ran the command
-            EntityPlayer player = GetPlayerFromSender(senderInfo);
+            var player = GetPlayerFromSender(senderInfo);
             if (player == null)
             {
                 Log.Error("[MagicSorter] Could not find player. This command must be run by a player.");
@@ -75,7 +73,7 @@ namespace MagicSorter
                     break;
                 case "scan":
                     manager.Scan();
-                    break;      
+                    break;
                 case "missing":
                     manager.Missing();
                     break;
@@ -106,16 +104,12 @@ namespace MagicSorter
             }
 
             if (loader.ForceRefresh())
-            {
                 Log.Out("[MagicSorter] Mappings reloaded successfully");
-            }
             else
-            {
                 Log.Warning("[MagicSorter] Failed to reload mappings - using existing");
-            }
         }
 
-        private void ShowConfig()
+        private static void ShowConfig()
         {
             var config = MagicSorterMod.Config;
             if (config == null)
@@ -125,7 +119,8 @@ namespace MagicSorter
             }
 
             Log.Out("[MagicSorter] Current configuration:");
-            Log.Out($"  RemoteMappingsUrl: {(string.IsNullOrEmpty(config.RemoteMappingsUrl) ? "(not set)" : config.RemoteMappingsUrl)}");
+            Log.Out(
+                $"  RemoteMappingsUrl: {(string.IsNullOrEmpty(config.RemoteMappingsUrl) ? "(not set)" : config.RemoteMappingsUrl)}");
             Log.Out($"  CacheDurationHours: {config.CacheDurationHours}");
             Log.Out($"  FallbackToBuiltIn: {config.FallbackToBuiltIn}");
             Log.Out($"  UseSpecificityResolution: {config.UseSpecificityResolution}");
@@ -134,7 +129,7 @@ namespace MagicSorter
             Log.Out($"  ConnectionTimeoutSeconds: {config.ConnectionTimeoutSeconds}");
         }
 
-        private void ShowMappings()
+        private static void ShowMappings()
         {
             var loader = MagicSorterMod.MappingLoader;
             if (loader == null)
@@ -144,21 +139,25 @@ namespace MagicSorter
             }
 
             Log.Out($"[MagicSorter] Mappings status: {loader.GetStatus()}");
-
-            if (loader.IsInitialized)
+            if (!loader.IsInitialized)
             {
-                var mappings = loader.GetMappings();
-                if (mappings != null)
-                {
-                    Log.Out($"  Aliases defined: {mappings.ContainerAliases.Count}");
-                    Log.Out($"  Tags defined: {mappings.Tags.Count}");
-                }
+                return;
             }
+
+
+            var mappings = loader.GetMappings();
+            if (mappings == null)
+            {
+                return;
+            }
+
+            Log.Out($"  Aliases defined: {mappings.ContainerAliases.Count}");
+            Log.Out($"  Tags defined: {mappings.Tags.Count}");
         }
 
-        private void ShowHelp()
+        private static void ShowHelp()
         {
-            int defaultRange = MagicSorterMod.Config?.DefaultRange ?? 20;
+            var defaultRange = MagicSorterMod.Config?.DefaultRange ?? 20;
             Log.Out("[MagicSorter] Usage: ms <command> [range]");
             Log.Out("  sort     - Sort items from [MagicSort] into [ms:X] containers");
             Log.Out("  list     - List all recognized containers in range");
@@ -174,7 +173,7 @@ namespace MagicSorter
             Log.Out($"  [range]  - Optional search radius (default: {defaultRange})");
         }
 
-        private EntityPlayer GetPlayerFromSender(CommandSenderInfo senderInfo)
+        private static EntityPlayer GetPlayerFromSender(CommandSenderInfo senderInfo)
         {
             var world = GameManager.Instance.World;
             if (world == null)
@@ -195,13 +194,13 @@ namespace MagicSorter
 
             // Fallback: first available player (dedicated server edge case)
             var players = world.Players?.list;
-            if (players != null && players.Count > 0)
+            if (players == null || players.Count == 0)
             {
-                Log.Warning("[MagicSorter] Could not identify specific player, using first available");
-                return players[0];
+                return null;
             }
 
-            return null;
+            Log.Warning("[MagicSorter] Could not identify specific player, using first available");
+            return players[0];
         }
     }
 }
