@@ -187,6 +187,7 @@
     "thrownDynamite": ["weapons", "explosives"],
     "thrownPipeBomb": ["weapons", "explosives"],
     "thrownFragGrenade": ["weapons", "explosives"],
+    "thrownMolotovCocktail": ["weapons", "explosives"],
     "gunRocketLauncher": ["weapons", "ranged", "explosives"],
     "gunRocketLauncherT2": ["weapons", "ranged", "explosives"],
     "gunRocketLauncherT3": ["weapons", "ranged", "explosives"],
@@ -604,6 +605,7 @@
     "ammoshotgun": "ammo",
     "ammoarrow": "ammo",
     "ammorocket": "ammo",
+    "ammo": "resources",
 
     "dukes": "treasure",
     "treasuremaps": "treasure",

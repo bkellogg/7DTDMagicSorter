@@ -11,7 +11,7 @@ namespace MagicSorter
 
         public override string getDescription()
         {
-            return "Magic item manager. Usage: ms <sort|list|preview|reload|config|mappings> [range]";
+            return "Magic item manager. Usage: ms <sort|list|plan|reload|config|mappings> [range]";
         }
 
         public override void Execute(List<string> args, CommandSenderInfo senderInfo)
@@ -70,8 +70,8 @@ namespace MagicSorter
                 case "list":
                     manager.ListContainers();
                     break;
-                case "preview":
-                    manager.Preview();
+                case "plan":
+                    manager.Plan();
                     break;
                 case "scan":
                     manager.Scan();
@@ -160,10 +160,10 @@ namespace MagicSorter
         {
             int defaultRange = MagicSorterMod.Config?.DefaultRange ?? 20;
             Log.Out("[MagicSorter] Usage: ms <command> [range]");
-            Log.Out("  sort     - Sort items from [SortMe] into [Sort:X] containers");
+            Log.Out("  sort     - Sort items from [MagicSort] into [ms:X] containers");
             Log.Out("  list     - List all recognized containers in range");
-            Log.Out("  preview  - Show what items would be sorted where (dry run)");
-            Log.Out("  scan     - Show items in [SortMe] grouped by category");
+            Log.Out("  plan     - Show what items would be sorted where (dry run)");
+            Log.Out("  scan     - Show items in [MagicSort] grouped by category");
             Log.Out("  missing  - Show categories that need containers");
             Log.Out("  suggest  - Show unsortable items and suggested containers");
             Log.Out("  invalid  - Show containers with invalid/unknown labels");
@@ -176,46 +176,29 @@ namespace MagicSorter
 
         private EntityPlayer GetPlayerFromSender(CommandSenderInfo senderInfo)
         {
-            // Remote client (multiplayer)
+            var world = GameManager.Instance.World;
+            if (world == null)
+                return null;
+
+            // Remote client (multiplayer) - get player by entity ID
             if (senderInfo.RemoteClientInfo != null)
             {
-                var entity = GameManager.Instance.World?.GetEntity(senderInfo.RemoteClientInfo.entityId);
+                var entity = world.GetEntity(senderInfo.RemoteClientInfo.entityId);
                 if (entity is EntityPlayer remotePlayer)
-                {
                     return remotePlayer;
-                }
             }
 
-            // Try to get player by client info's player ID
-            if (senderInfo.RemoteClientInfo != null)
-            {
-                var players = GameManager.Instance.World?.Players?.list;
-                if (players != null)
-                {
-                    foreach (var player in players)
-                    {
-                        if (player.entityId == senderInfo.RemoteClientInfo.entityId)
-                        {
-                            return player;
-                        }
-                    }
-                }
-            }
-
-            // Local player (single player or host playing on their own server)
-            var primaryPlayer = GameManager.Instance.World?.GetPrimaryPlayer();
+            // Local player (single player or host)
+            var primaryPlayer = world.GetPrimaryPlayer();
             if (primaryPlayer != null)
-            {
                 return primaryPlayer;
-            }
 
-            // Last resort: find any player in the world (dedicated server with only one player)
-            var allPlayers = GameManager.Instance.World?.Players?.list;
-            if (allPlayers != null && allPlayers.Count > 0)
+            // Fallback: first available player (dedicated server edge case)
+            var players = world.Players?.list;
+            if (players != null && players.Count > 0)
             {
-                // This shouldn't normally happen, but provides a fallback
-                Log.Warning("[MagicSorter] Could not identify specific player, using first available player");
-                return allPlayers[0];
+                Log.Warning("[MagicSorter] Could not identify specific player, using first available");
+                return players[0];
             }
 
             return null;

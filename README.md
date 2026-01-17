@@ -4,11 +4,11 @@ A 7 Days to Die mod that automatically sorts items from a designated input conta
 
 ## User Flow
 
-1. Rename storage containers with category labels (e.g., `[Sort:Food]`, `[Sort:Tools]`)
-2. Rename one container as `[SortMe]`
-3. Dump loot into the `[SortMe]` container
+1. Rename storage containers with category labels (e.g., `[ms:Food]`, `[ms:Tools]`)
+2. Rename one container as `[MagicSort]`
+3. Dump loot into the `[MagicSort]` container
 4. Stand near the containers and run `ms sort` in the F1 console
-5. Items move from `[SortMe]` to appropriate `[Sort:X]` containers
+5. Items move from `[MagicSort]` to appropriate `[ms:X]` containers
 
 ## Installation
 
@@ -47,9 +47,9 @@ ms <command> [range]
 
 | Command | Description |
 |---------|-------------|
-| `sort` | Sort items from [SortMe] into [Sort:X] containers |
+| `sort` | Sort items from [MagicSort] into [ms:X] containers |
 | `list` | List all recognized containers in range |
-| `preview` | Show what items would be sorted where (dry run) |
+| `plan` | Show what items would be sorted where (dry run) |
 | `suggest` | Show items that can't be sorted and suggest containers to create |
 
 - **range** (optional): Search radius in blocks. Default: 20
@@ -60,7 +60,7 @@ ms <command> [range]
 ms sort        # Sort items within 20 blocks
 ms sort 30     # Sort items within 30 blocks
 ms list        # List all containers in range
-ms preview     # Preview what would happen without moving items
+ms plan        # Preview what would happen without moving items
 ms suggest     # See what containers you need to create for unsorted items
 ```
 
@@ -68,28 +68,28 @@ ms suggest     # See what containers you need to create for unsorted items
 
 | Container Name | Purpose |
 |----------------|---------|
-| `[SortMe]` | Source container - items to be sorted |
-| `[Sort:<Label>]` | Target container, where `<Label>` matches a category |
-| `[Sort:Unknown]` | (Optional) Fallback for items with no matching category |
+| `[MagicSort]` | Source container - items to be sorted |
+| `[ms:<Label>]` | Target container, where `<Label>` matches a category |
+| `[ms:Unknown]` | (Optional) Fallback for items with no matching category |
 
-Multiple containers can share the same label (e.g., two `[Sort:Food]` crates). Items fill the fullest container first to consolidate items.
+Multiple containers can share the same label (e.g., two `[ms:Food]` crates). Items fill the fullest container first to consolidate items.
 
 ### Example Setup
 
 ```
-[SortMe]            <- Dump all your loot here
-[Sort:Food]         <- Food, drinks, seeds
-[Sort:Ammo]         <- Ammunition
-[Sort:Weapons]      <- Guns, melee weapons
-[Sort:Tools]        <- Tools (pickaxe, wrench, etc.)
-[Sort:Medical]      <- First aid, medicine
-[Sort:From Earth]   <- Raw resources (stone, iron, wood)
-[Sort:Man Made]     <- Crafted resources (forged iron, etc.)
-[Sort:From Animals] <- Organic materials (leather, fat, bone)
-[Sort:Armor]        <- Armor pieces
-[Sort:Books]        <- Skill books, schematics
-[Sort:Treasure]     <- Valuables, treasure maps, dukes
-[Sort:Unknown]      <- Everything else
+[MagicSort]         <- Dump all your loot here
+[ms:Food]           <- Food, drinks, seeds
+[ms:Ammo]           <- Ammunition
+[ms:Weapons]        <- Guns, melee weapons
+[ms:Tools]          <- Tools (pickaxe, wrench, etc.)
+[ms:Medical]        <- First aid, medicine
+[ms:From Earth]     <- Raw resources (stone, iron, wood)
+[ms:Man Made]       <- Crafted resources (forged iron, etc.)
+[ms:From Animals]   <- Organic materials (leather, fat, bone)
+[ms:Armor]          <- Armor pieces
+[ms:Books]          <- Skill books, schematics
+[ms:Treasure]       <- Valuables, treasure maps, dukes
+[ms:Unknown]        <- Everything else
 ```
 
 ## Category System
@@ -110,17 +110,17 @@ Each item belongs to one or more **categories** (defined in `mappings.json` or d
 
 ### 2. Aliases Map Container Labels to Categories
 
-When you name a container `[Sort:X]`, the label `X` is resolved to a category using **aliases**:
+When you name a container `[ms:X]`, the label `X` is resolved to a category using **aliases**:
 
 | Container Label | Alias Resolves To | What Items Go Here |
 |-----------------|-------------------|-------------------|
-| `[Sort:Man Made]` | `craftedresources` | Forged iron, bullet casings, concrete |
-| `[Sort:From Animals]` | `organic` | Leather, animal fat, bone, feathers |
-| `[Sort:From Earth]` | `rawresources` | Stone, wood, iron ore, coal |
-| `[Sort:Handguns]` | `pistols` | Pistols, revolvers, magnums |
-| `[Sort:Medicine]` | `medical` | First aid kits, bandages, antibiotics |
+| `[ms:Man Made]` | `craftedresources` | Forged iron, bullet casings, concrete |
+| `[ms:From Animals]` | `organic` | Leather, animal fat, bone, feathers |
+| `[ms:From Earth]` | `rawresources` | Stone, wood, iron ore, coal |
+| `[ms:Handguns]` | `pistols` | Pistols, revolvers, magnums |
+| `[ms:Medicine]` | `medical` | First aid kits, bandages, antibiotics |
 
-You can also use the category name directly: `[Sort:craftedresources]` works the same as `[Sort:Man Made]`.
+You can also use the category name directly: `[ms:craftedresources]` works the same as `[ms:Man Made]`.
 
 ### 3. Matching: Item Category = Container Category
 
@@ -129,7 +129,7 @@ An item goes into a container when one of the item's categories matches the cont
 ```
 Forged Iron (categories: resources, craftedresources)
     ↓
-[Sort:Man Made] (alias resolves to: craftedresources)
+[ms:Man Made] (alias resolves to: craftedresources)
     ↓
 Match! craftedresources = craftedresources → Item goes here
 ```
@@ -137,7 +137,7 @@ Match! craftedresources = craftedresources → Item goes here
 ```
 Animal Fat (categories: resources, organic)
     ↓
-[Sort:From Animals] (alias resolves to: organic)
+[ms:From Animals] (alias resolves to: organic)
     ↓
 Match! organic = organic → Item goes here
 ```
@@ -156,22 +156,22 @@ When an item matches multiple containers, the one with higher **specificity** wi
 A pistol has categories `[weapons, ranged, pistols]`
 ```
 Containers:
-  [Sort:Guns]      → alias resolves to "ranged" (specificity 60)
-  [Sort:Handguns]  → alias resolves to "pistols" (specificity 100)
+  [ms:Guns]      → alias resolves to "ranged" (specificity 60)
+  [ms:Handguns]  → alias resolves to "pistols" (specificity 100)
 
-Result: Goes to [Sort:Handguns] because pistols (100) > ranged (60)
+Result: Goes to [ms:Handguns] because pistols (100) > ranged (60)
 ```
 
 **Example with fallbacks:**
 A steel pickaxe has categories `[tools, miningtools]`, no direct match exists:
 ```
 Containers:
-  [Sort:Man Made]   → alias resolves to "craftedresources" (specificity 70)
-  [Sort:Resources]  → category "resources" (specificity 30)
+  [ms:Man Made]   → alias resolves to "craftedresources" (specificity 70)
+  [ms:Resources]  → category "resources" (specificity 30)
 
 Fallback chain: miningtools → tools → craftedresources → resources
 
-Result: Goes to [Sort:Man Made] because craftedresources (70) > resources (30)
+Result: Goes to [ms:Man Made] because craftedresources (70) > resources (30)
 ```
 
 ### 5. Fallbacks: When No Container Matches
@@ -181,13 +181,13 @@ If no container matches an item's categories directly, it walks the **fallback c
 ```
 Steel Pickaxe (categories: tools, miningtools)
     ↓
-No [Sort:Tools] or [Sort:Mining] container exists
+No [ms:Tools] or [ms:Mining] container exists
     ↓
 Fallback: miningtools → tools → craftedresources
     ↓
-[Sort:Man Made] exists (alias for craftedresources)
+[ms:Man Made] exists (alias for craftedresources)
     ↓
-Item goes to [Sort:Man Made]
+Item goes to [ms:Man Made]
 ```
 
 The fallback system also respects specificity - if multiple fallback categories match different containers, the highest specificity wins.
@@ -204,7 +204,7 @@ The fallback system also respects specificity - if multiple fallback categories 
 | `melee` | 60 | Melee weapons | weapons |
 | `blades` | 90 | Bladed weapons | melee |
 | `clubs` | 90 | Clubs/bats | melee |
-| `ammo` | 50 | All ammunition | - |
+| `ammo` | 50 | All ammunition | resources |
 | `tools` | 50 | All tools | craftedresources |
 | `miningtools` | 90 | Pickaxe, auger | tools |
 | `armor` | 50 | All armor | - |
@@ -258,28 +258,30 @@ FOOD & MEDICAL
 cookedfood/rawfood/cannedfood/drinks/farming ──► food
 firstaid/medicine/buffs ──► medical
 
+AMMO
+ammo9mm/ammo44/ammo762/ammoshotgun/ammoarrow/ammorocket ──► ammo ──► resources
+
 OTHER
 schematics/skillbooks ──► books
 armorhead/armorchest/armorlegs/armorboots/armorgloves ──► armor
 clothinghead/clothingchest/clothinglegs/clothingfeet/clothinghands/eyewear ──► clothing
-ammo9mm/ammo44/ammo762/ammoshotgun/ammoarrow/ammorocket ──► ammo
 ```
 
 ### Practical Fallback Example
 
 With these containers:
 ```
-[Sort:Man Made]    ← alias for craftedresources
-[Sort:Weapons]
-[Sort:Food]
+[ms:Man Made]    ← alias for craftedresources
+[ms:Weapons]
+[ms:Food]
 ```
 
 | Item | Categories | Destination | Fallback Chain |
 |------|------------|-------------|----------------|
-| Pistol | pistols, ranged, weapons | [Sort:Weapons] | Direct match |
-| Steel Pickaxe | miningtools, tools | [Sort:Man Made] | tools → craftedresources |
-| Crucible | workstations, building | [Sort:Man Made] | building → craftedresources |
-| Minibike | vehicles | [Sort:Man Made] | vehicles → craftedresources |
+| Pistol | pistols, ranged, weapons | [ms:Weapons] | Direct match |
+| Steel Pickaxe | miningtools, tools | [ms:Man Made] | tools → craftedresources |
+| Crucible | workstations, building | [ms:Man Made] | building → craftedresources |
+| Minibike | vehicles | [ms:Man Made] | vehicles → craftedresources |
 | Treasure Map | treasuremaps, treasure | *unsorted* | treasure → misc (no container) |
 
 ### All Categories
@@ -301,7 +303,7 @@ With these containers:
 | spears | 90 | melee | eyewear | 90 | clothing |
 | sledges | 90 | melee | food | 50 | - |
 | knuckles | 90 | melee | cookedfood | 90 | food |
-| ammo | 50 | - | rawfood | 90 | food |
+| ammo | 50 | resources | rawfood | 90 | food |
 | ammo9mm | 100 | ammo | cannedfood | 90 | food |
 | ammo44 | 100 | ammo | drinks | 90 | food |
 | ammo762 | 100 | ammo | farming | 70 | food |
@@ -410,13 +412,13 @@ Aliases let you use friendly names on containers. Here's what each alias resolve
 ## Sorting Logic
 
 1. Find all containers within range of player
-2. Identify `[SortMe]` container (closest if multiple exist)
-3. Build map of `[Sort:X]` containers by category
-4. For each item in `[SortMe]`:
+2. Identify `[MagicSort]` container (closest if multiple exist)
+3. Build map of `[ms:X]` containers by category
+4. For each item in `[MagicSort]`:
    - Get item's categories (from mappings, patterns, or game Groups)
-   - Find matching `[Sort:X]` container using specificity
+   - Find matching `[ms:X]` container using specificity
    - If no match, try fallback categories
-   - If still no match, try `[Sort:Unknown]`
+   - If still no match, try `[ms:Unknown]`
    - Move item (stack with existing if possible)
 5. Log summary to console
 
@@ -477,8 +479,7 @@ Models/
   ModConfiguration.cs          - Configuration settings
 Services/
   CategoryResolver.cs          - Specificity-based category matching
-  MappingLoader.cs             - Load mappings from JSON
-  SimpleJsonParser.cs          - Lightweight JSON parser
+  MappingLoader.cs             - Load mappings from JSON (uses Newtonsoft.Json)
   ConfigurationLoader.cs       - XML config loader
 Config/
   MagicSorter.xml              - Default configuration

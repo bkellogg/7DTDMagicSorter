@@ -1,3 +1,6 @@
+using System;
+using System.Linq;
+using System.Reflection;
 using UnityEngine;
 
 namespace MagicSorter
@@ -7,12 +10,20 @@ namespace MagicSorter
     /// </summary>
     public class ContainerWrapper
     {
+        private const BindingFlags ReflectionFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+
         public TileEntityLootContainer LootContainer { get; }
         public TileEntityComposite Composite { get; }
         public string Name { get; }
         public Vector3i Position { get; }
 
-        private object _storageFeature;
+        private readonly object _storageFeature;
+
+        // Cached reflection members for performance - looked up once, reused on every GetItems() call
+        private MethodInfo _getItemsMethod;
+        private PropertyInfo _itemsProperty;
+        private FieldInfo _itemsField;
+        private bool _reflectionCached;
 
         public bool IsComposite => Composite != null;
 
@@ -38,46 +49,67 @@ namespace MagicSorter
                 return LootContainer.GetItems();
             }
 
-            if (_storageFeature != null)
+            if (_storageFeature == null)
             {
-                try
+                return null;
+            }
+
+            try
+            {
+                // Cache reflection lookups on first call for performance
+                if (!_reflectionCached)
                 {
-                    var type = _storageFeature.GetType();
-                    var bindingFlags = System.Reflection.BindingFlags.Public |
-                                       System.Reflection.BindingFlags.NonPublic |
-                                       System.Reflection.BindingFlags.Instance;
-
-                    // Try GetItems method
-                    var getItemsMethod = type.GetMethod("GetItems", bindingFlags);
-                    if (getItemsMethod != null)
-                    {
-                        var result = getItemsMethod.Invoke(_storageFeature, null);
-                        if (result is ItemStack[] methodItems)
-                            return methodItems;
-                    }
-
-                    // Try "items" property
-                    var itemsProp = type.GetProperty("items", bindingFlags);
-                    if (itemsProp != null)
-                    {
-                        var val = itemsProp.GetValue(_storageFeature);
-                        if (val is ItemStack[] propItems)
-                            return propItems;
-                    }
-
-                    // Try fields
-                    var fields = type.GetFields(bindingFlags);
-                    foreach (var field in fields)
-                    {
-                        var val = field.GetValue(_storageFeature);
-                        if (val is ItemStack[] items)
-                            return items;
-                    }
+                    CacheReflectionMembers();
                 }
-                catch { }
+
+                // Use cached method/property/field
+                if (_getItemsMethod != null)
+                {
+                    var result = _getItemsMethod.Invoke(_storageFeature, null);
+                    if (result is ItemStack[] methodItems)
+                        return methodItems;
+                }
+
+                if (_itemsProperty != null)
+                {
+                    var val = _itemsProperty.GetValue(_storageFeature);
+                    if (val is ItemStack[] propItems)
+                        return propItems;
+                }
+
+                if (_itemsField != null)
+                {
+                    var val = _itemsField.GetValue(_storageFeature);
+                    if (val is ItemStack[] fieldItems)
+                        return fieldItems;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[MagicSorter] Error accessing items in composite container at {Position}: {ex.Message}");
             }
 
             return null;
+        }
+
+        private void CacheReflectionMembers()
+        {
+            _reflectionCached = true;
+            var type = _storageFeature.GetType();
+
+            // Try GetItems method first (most common)
+            _getItemsMethod = type.GetMethod("GetItems", ReflectionFlags);
+            if (_getItemsMethod != null)
+                return;
+
+            // Try "items" property
+            _itemsProperty = type.GetProperty("items", ReflectionFlags);
+            if (_itemsProperty != null)
+                return;
+
+            // Try to find an ItemStack[] field
+            var fields = type.GetFields(ReflectionFlags);
+            _itemsField = fields.FirstOrDefault(f => f.FieldType == typeof(ItemStack[]));
         }
 
         public void SetModified()
@@ -97,28 +129,76 @@ namespace MagicSorter
             try
             {
                 var type = composite.GetType();
-                var modulesField = type.GetField("modulesCustomOrder",
-                    System.Reflection.BindingFlags.Public |
-                    System.Reflection.BindingFlags.NonPublic |
-                    System.Reflection.BindingFlags.Instance);
+                var modulesField = type.GetField("modulesCustomOrder", ReflectionFlags);
 
-                if (modulesField != null)
+                if (modulesField == null)
                 {
-                    var modules = modulesField.GetValue(composite) as System.Array;
-                    if (modules != null)
+                    return null;
+                }
+
+                var modules = modulesField.GetValue(composite) as Array;
+                if (modules == null)
+                {
+                    return null;
+                }
+
+                foreach (var module in modules)
+                {
+                    if (module != null && module.GetType().Name.Contains("Storage"))
                     {
-                        foreach (var module in modules)
-                        {
-                            if (module != null && module.GetType().Name.Contains("Storage"))
-                            {
-                                return module;
-                            }
-                        }
+                        return module;
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Log.Warning($"[MagicSorter] Error finding storage feature in composite: {ex.Message}");
+            }
+
             return null;
+        }
+
+        /// <summary>
+        /// Gets the fullness ratio (0.0 to 1.0) of this container
+        /// </summary>
+        public float GetFullness()
+        {
+            var items = GetItems();
+            if (items == null || items.Length == 0)
+                return 0f;
+
+            int usedSlots = items.Count(s => !s.IsEmpty());
+            return (float)usedSlots / items.Length;
+        }
+
+        /// <summary>
+        /// Checks if this container has space for the given item (empty slot or stackable)
+        /// </summary>
+        public bool HasSpaceFor(ItemStack itemToAdd)
+        {
+            var items = GetItems();
+            if (items == null)
+                return false;
+
+            // Check for empty slot
+            if (items.Any(s => s.IsEmpty()))
+                return true;
+
+            // Check for stackable slot
+            if (itemToAdd != null && !itemToAdd.IsEmpty())
+            {
+                foreach (var slot in items)
+                {
+                    if (!slot.IsEmpty() &&
+                        slot.itemValue.type == itemToAdd.itemValue.type &&
+                        slot.count < slot.itemValue.ItemClass.Stacknumber.Value)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
     }
 }

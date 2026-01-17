@@ -76,6 +76,12 @@ namespace MagicSorter.Services
             if (string.IsNullOrEmpty(itemName))
                 return new List<string>();
 
+            // Weapon/gun parts - check BEFORE weapon patterns (e.g., gunRocketLauncherParts, gunShotgunParts)
+            if (itemName.IndexOf("Parts", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                (itemName.StartsWith("gun", StringComparison.OrdinalIgnoreCase) ||
+                 itemName.StartsWith("melee", StringComparison.OrdinalIgnoreCase)))
+                return new List<string> { "resources", "mechanical" };
+
             // Guns - check most specific patterns first
             if (itemName.StartsWith("gunBot", StringComparison.OrdinalIgnoreCase))
                 return new List<string> { "weapons", "turrets" };
@@ -164,7 +170,8 @@ namespace MagicSorter.Services
             if (itemName.StartsWith("thrownDynamite", StringComparison.OrdinalIgnoreCase) ||
                 itemName.StartsWith("thrownPipe", StringComparison.OrdinalIgnoreCase) ||
                 itemName.StartsWith("thrownGrenade", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("thrownFrag", StringComparison.OrdinalIgnoreCase))
+                itemName.StartsWith("thrownFrag", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("thrownMolotov", StringComparison.OrdinalIgnoreCase))
                 return new List<string> { "weapons", "explosives" };
 
             // Armor
@@ -421,7 +428,7 @@ namespace MagicSorter.Services
                     var specificity = GetCategorySpecificity(mappings, category);
                     foreach (var container in containers)
                     {
-                        if (HasSpaceForItem(container, itemStack))
+                        if (container.HasSpaceFor(itemStack))
                         {
                             candidates.Add(new ContainerCandidate
                             {
@@ -443,7 +450,7 @@ namespace MagicSorter.Services
                         var specificity = GetCategorySpecificity(mappings, resolvedCategory);
                         foreach (var container in aliasContainers)
                         {
-                            if (HasSpaceForItem(container, itemStack))
+                            if (container.HasSpaceFor(itemStack))
                             {
                                 candidates.Add(new ContainerCandidate
                                 {
@@ -469,7 +476,7 @@ namespace MagicSorter.Services
                                 if (candidates.Any(c => c.Container == container))
                                     continue;
 
-                                if (HasSpaceForItem(container, itemStack))
+                                if (container.HasSpaceFor(itemStack))
                                 {
                                     candidates.Add(new ContainerCandidate
                                     {
@@ -485,7 +492,7 @@ namespace MagicSorter.Services
                 }
 
                 // Note: Removed overly aggressive partial matching that was causing false matches
-                // (e.g., "Melee Weapons" alias containing "weapons" would match items with category "weapons" to [Sort:Melee])
+                // (e.g., "Melee Weapons" alias containing "weapons" would match items with category "weapons" to [ms:Melee])
                 // Now we only use exact matches and alias resolution, with fallback chain for broader categories
             }
 
@@ -512,7 +519,7 @@ namespace MagicSorter.Services
                             var specificity = GetCategorySpecificity(mappings, fallbackCategory);
                             foreach (var container in containers)
                             {
-                                if (HasSpaceForItem(container, itemStack))
+                                if (container.HasSpaceFor(itemStack))
                                 {
                                     candidates.Add(new ContainerCandidate
                                     {
@@ -535,7 +542,7 @@ namespace MagicSorter.Services
                                 if (candidates.Any(c => c.Container == container))
                                     continue;
 
-                                if (HasSpaceForItem(container, itemStack))
+                                if (container.HasSpaceFor(itemStack))
                                 {
                                     candidates.Add(new ContainerCandidate
                                     {
@@ -561,7 +568,7 @@ namespace MagicSorter.Services
                                     if (candidates.Any(c => c.Container == container))
                                         continue;
 
-                                    if (HasSpaceForItem(container, itemStack))
+                                    if (container.HasSpaceFor(itemStack))
                                     {
                                         candidates.Add(new ContainerCandidate
                                         {
@@ -594,7 +601,7 @@ namespace MagicSorter.Services
                 candidates = candidates
                     .OrderByDescending(c => c.Specificity)
                     .ThenByDescending(c => c.IsExactMatch)
-                    .ThenByDescending(c => GetContainerFullness(c.Container))
+                    .ThenByDescending(c => c.Container.GetFullness())
                     .ToList();
             }
             else
@@ -602,7 +609,7 @@ namespace MagicSorter.Services
                 // Original behavior: prefer fullest container
                 candidates = candidates
                     .OrderByDescending(c => c.IsExactMatch)
-                    .ThenByDescending(c => GetContainerFullness(c.Container))
+                    .ThenByDescending(c => c.Container.GetFullness())
                     .ToList();
             }
 
@@ -613,6 +620,18 @@ namespace MagicSorter.Services
             }
 
             return candidates[0].Container;
+        }
+
+        /// <summary>
+        /// Checks if the item name matches any known patterns (used for debug output)
+        /// </summary>
+        public bool HasPatternMatch(string itemName)
+        {
+            if (string.IsNullOrEmpty(itemName))
+                return false;
+
+            var categories = GetCategoriesFromPattern(itemName);
+            return categories.Count > 0;
         }
 
         /// <summary>
@@ -639,40 +658,6 @@ namespace MagicSorter.Services
                 return mappings.GetSpecificity(category);
             }
             return 50; // Default specificity
-        }
-
-        private bool HasSpaceForItem(ContainerWrapper container, ItemStack itemToAdd)
-        {
-            var items = container.GetItems();
-            if (items == null) return false;
-
-            // Check for empty slot
-            if (items.Any(s => s.IsEmpty())) return true;
-
-            // Check for stackable slot
-            if (itemToAdd != null && !itemToAdd.IsEmpty())
-            {
-                foreach (var slot in items)
-                {
-                    if (!slot.IsEmpty() &&
-                        slot.itemValue.type == itemToAdd.itemValue.type &&
-                        slot.count < slot.itemValue.ItemClass.Stacknumber.Value)
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        private float GetContainerFullness(ContainerWrapper container)
-        {
-            var items = container.GetItems();
-            if (items == null || items.Length == 0) return 0;
-
-            int usedSlots = items.Count(s => !s.IsEmpty());
-            return (float)usedSlots / items.Length;
         }
 
         private class ContainerCandidate

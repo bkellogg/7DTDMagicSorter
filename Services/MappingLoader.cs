@@ -20,7 +20,7 @@ namespace MagicSorter.Services
         private MappingData _currentMappings;
         private DateTime _lastFetchTime;
         private bool _isInitialized;
-        private bool _isFetching;
+        private int _isFetching; // int for Interlocked operations (0 = false, 1 = true)
         private readonly object _lock = new object();
 
         public MappingLoader(string modPath, ModConfiguration config)
@@ -49,7 +49,7 @@ namespace MagicSorter.Services
         /// <summary>
         /// Returns true if currently fetching from remote
         /// </summary>
-        public bool IsFetching => _isFetching;
+        public bool IsFetching => _isFetching != 0;
 
         /// <summary>
         /// Gets count of items in current mappings
@@ -237,12 +237,12 @@ namespace MagicSorter.Services
 
         private bool FetchRemote()
         {
-            if (_isFetching)
+            // Atomically check and set _isFetching to prevent race conditions
+            // CompareExchange returns the original value; if it was 0, we set it to 1 and proceed
+            if (Interlocked.CompareExchange(ref _isFetching, 1, 0) != 0)
             {
-                return false;
+                return false; // Another thread is already fetching
             }
-
-            _isFetching = true;
 
             try
             {
@@ -251,46 +251,44 @@ namespace MagicSorter.Services
                     Log.Out($"[MagicSorter] Fetching mappings from {_config.RemoteMappingsUrl}");
                 }
 
-                using (var client = new WebClient())
+                // Use HttpWebRequest instead of WebClient for proper timeout support
+                var json = DownloadWithTimeout(_config.RemoteMappingsUrl, _config.ConnectionTimeoutSeconds * 1000);
+
+                if (string.IsNullOrEmpty(json))
                 {
-                    // Set timeout via headers (WebClient doesn't have direct timeout)
-                    client.Headers.Add("User-Agent", "MagicSorter/1.0");
-
-                    // Use synchronous download with timeout handling
-                    var json = DownloadWithTimeout(client, _config.RemoteMappingsUrl, _config.ConnectionTimeoutSeconds * 1000);
-
-                    if (string.IsNullOrEmpty(json))
-                    {
-                        Log.Warning("[MagicSorter] Empty response from remote");
-                        return false;
-                    }
-
-                    var mappings = JsonConvert.DeserializeObject<MappingData>(json);
-
-                    if (mappings == null || (mappings.Categories.Count == 0 && mappings.Items.Count == 0))
-                    {
-                        Log.Warning("[MagicSorter] Invalid mappings data from remote");
-                        return false;
-                    }
-
-                    mappings.NormalizeDictionaries();
-                    lock (_lock)
-                    {
-                        _currentMappings = mappings;
-                        _lastFetchTime = DateTime.Now;
-                    }
-
-                    // Save to cache
-                    SaveToCache(json);
-
-                    _isInitialized = true;
-                    Log.Out($"[MagicSorter] Loaded remote mappings (v{Version}, {CategoryCount} categories, {ItemCount} items)");
-                    return true;
+                    Log.Warning("[MagicSorter] Empty response from remote");
+                    return false;
                 }
+
+                var mappings = JsonConvert.DeserializeObject<MappingData>(json);
+
+                if (mappings == null || (mappings.Categories.Count == 0 && mappings.Items.Count == 0))
+                {
+                    Log.Warning("[MagicSorter] Invalid mappings data from remote");
+                    return false;
+                }
+
+                mappings.NormalizeDictionaries();
+                lock (_lock)
+                {
+                    _currentMappings = mappings;
+                    _lastFetchTime = DateTime.Now;
+                }
+
+                // Save to cache
+                SaveToCache(json);
+
+                _isInitialized = true;
+                Log.Out($"[MagicSorter] Loaded remote mappings (v{Version}, {CategoryCount} categories, {ItemCount} items)");
+                return true;
             }
             catch (WebException ex)
             {
                 Log.Warning($"[MagicSorter] Network error fetching mappings: {ex.Message}");
+            }
+            catch (TimeoutException ex)
+            {
+                Log.Warning($"[MagicSorter] {ex.Message}");
             }
             catch (Exception ex)
             {
@@ -298,45 +296,39 @@ namespace MagicSorter.Services
             }
             finally
             {
-                _isFetching = false;
+                // Atomically reset _isFetching to 0
+                Interlocked.Exchange(ref _isFetching, 0);
             }
 
             return false;
         }
 
-        private string DownloadWithTimeout(WebClient client, string url, int timeoutMs)
+        /// <summary>
+        /// Downloads content from URL with proper timeout support using HttpWebRequest.
+        /// Unlike WebClient with background threads, this properly respects timeouts
+        /// without leaving orphaned downloads or leaking resources.
+        /// </summary>
+        private string DownloadWithTimeout(string url, int timeoutMs)
         {
-            string result = null;
-            Exception downloadException = null;
-            var completed = new ManualResetEvent(false);
+            var request = (HttpWebRequest)WebRequest.Create(url);
+            request.Timeout = timeoutMs;
+            request.ReadWriteTimeout = timeoutMs;
+            request.UserAgent = "MagicSorter/1.0";
+            request.Method = "GET";
 
-            ThreadPool.QueueUserWorkItem(_ =>
+            using (var response = (HttpWebResponse)request.GetResponse())
+            using (var stream = response.GetResponseStream())
             {
-                try
+                if (stream == null)
                 {
-                    result = client.DownloadString(url);
+                    return null;
                 }
-                catch (Exception ex)
-                {
-                    downloadException = ex;
-                }
-                finally
-                {
-                    completed.Set();
-                }
-            });
 
-            if (!completed.WaitOne(timeoutMs))
-            {
-                throw new TimeoutException($"Download timed out after {timeoutMs}ms");
+                using (var reader = new StreamReader(stream))
+                {
+                    return reader.ReadToEnd();
+                }
             }
-
-            if (downloadException != null)
-            {
-                throw downloadException;
-            }
-
-            return result;
         }
 
         private void SaveToCache(string json)
@@ -384,7 +376,7 @@ namespace MagicSorter.Services
                     status += $", Last fetch: {age.TotalHours:F1}h ago";
                 }
 
-                if (_isFetching)
+                if (_isFetching != 0)
                 {
                     status += " (fetching...)";
                 }

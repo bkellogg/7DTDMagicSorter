@@ -8,9 +8,10 @@ namespace MagicSorter
 {
     public class ContainerManager
     {
-        private const string SortMeTag = "[SortMe]";
-        private const string SortPrefix = "[Sort:";
+        private const string SortMeTag = "[MagicSort]";
+        private const string SortPrefix = "[ms:";
         private const string UnknownCategory = "Unknown";
+        private const string UnknownItemName = "Unknown Item";
 
         private readonly EntityPlayer _player;
         private readonly int _range;
@@ -61,11 +62,11 @@ namespace MagicSorter
                 {
                     var items = sortMe.GetItems();
                     int itemCount = items?.Count(s => !s.IsEmpty()) ?? 0;
-                    Log.Out($"  [SortMe] at {sortMe.Position} - {itemCount} items");
+                    Log.Out($"  [MagicSort] at {sortMe.Position} - {itemCount} items");
                 }
                 else
                 {
-                    Log.Out("  [SortMe] - NOT FOUND");
+                    Log.Out("  [MagicSort] - NOT FOUND");
                 }
 
                 // List Sort containers by category
@@ -76,7 +77,7 @@ namespace MagicSorter
                         var items = container.GetItems();
                         int used = items?.Count(s => !s.IsEmpty()) ?? 0;
                         int total = items?.Length ?? 0;
-                        Log.Out($"  [Sort:{kvp.Key}] at {container.Position} - {used}/{total} slots");
+                        Log.Out($"  [ms:{kvp.Key}] at {container.Position} - {used}/{total} slots");
                     }
                 }
             }
@@ -86,11 +87,11 @@ namespace MagicSorter
             }
         }
 
-        public void Preview()
+        public void Plan()
         {
             try
             {
-                PreviewInternal();
+                PlanInternal();
             }
             catch (Exception ex)
             {
@@ -117,14 +118,14 @@ namespace MagicSorter
 
             if (sortMeContainer == null)
             {
-                Log.Error("[MagicSorter] No [SortMe] container found in range.");
+                Log.Error("[MagicSorter] No [MagicSort] container found in range.");
                 return;
             }
 
             var items = sortMeContainer.GetItems();
             if (items == null)
             {
-                Log.Error("[MagicSorter] Could not access items in [SortMe] container");
+                Log.Error("[MagicSorter] Could not access items in [MagicSort] container");
                 return;
             }
 
@@ -157,11 +158,11 @@ namespace MagicSorter
 
             if (itemsByCategory.Count == 0)
             {
-                Log.Out("[MagicSorter] [SortMe] is empty");
+                Log.Out("[MagicSorter] [MagicSort] is empty");
                 return;
             }
 
-            Log.Out("[MagicSorter] Items in [SortMe] by category:");
+            Log.Out("[MagicSorter] Items in [MagicSort] by category:");
             foreach (var kvp in itemsByCategory.OrderBy(k => k.Key))
             {
                 Log.Out($"  {kvp.Key}:");
@@ -210,7 +211,7 @@ namespace MagicSorter
 
             if (categoryMap.Count == 0)
             {
-                Log.Out("[MagicSorter] No [Sort:X] containers found in range.");
+                Log.Out("[MagicSorter] No [ms:X] containers found in range.");
                 return;
             }
 
@@ -274,7 +275,7 @@ namespace MagicSorter
             foreach (var (label, pos, suggestion) in invalidContainers)
             {
                 var suggestionText = !string.IsNullOrEmpty(suggestion) ? $" (did you mean '{suggestion}'?)" : "";
-                Log.Out($"  [Sort:{label}] at {pos}{suggestionText}");
+                Log.Out($"  [ms:{label}] at {pos}{suggestionText}");
             }
 
             Log.Out("[MagicSorter] These containers won't receive any items during sorting.");
@@ -331,7 +332,7 @@ namespace MagicSorter
 
             if (sortMeContainer == null)
             {
-                Log.Error("[MagicSorter] No [SortMe] container found in range.");
+                Log.Error("[MagicSorter] No [MagicSort] container found in range.");
                 return;
             }
 
@@ -340,7 +341,7 @@ namespace MagicSorter
             var items = sortMeContainer.GetItems();
             if (items == null)
             {
-                Log.Error("[MagicSorter] Could not access items in [SortMe] container");
+                Log.Error("[MagicSorter] Could not access items in [MagicSort] container");
                 return;
             }
 
@@ -383,7 +384,7 @@ namespace MagicSorter
                 string suggestedCategory;
                 if (categories.Count == 0)
                 {
-                    suggestedCategory = "Unknown";
+                    suggestedCategory = UnknownCategory;
                 }
                 else
                 {
@@ -400,7 +401,7 @@ namespace MagicSorter
 
             foreach (var kvp in suggestions.OrderBy(k => k.Key))
             {
-                Log.Out($"  Create [Sort:{kvp.Key}] for:");
+                Log.Out($"  Create [ms:{kvp.Key}] for:");
                 foreach (var item in kvp.Value)
                 {
                     Log.Out($"    - {item}");
@@ -427,20 +428,20 @@ namespace MagicSorter
 
             if (sortMeContainer == null)
             {
-                Log.Error("[MagicSorter] No [SortMe] container found in range.");
+                Log.Error("[MagicSorter] No [MagicSort] container found in range.");
                 return;
             }
 
             var items = sortMeContainer.GetItems();
             if (items == null)
             {
-                Log.Error("[MagicSorter] Could not access items in [SortMe] container");
+                Log.Error("[MagicSorter] Could not access items in [MagicSort] container");
                 return;
             }
 
             var mappings = MagicSorterMod.MappingLoader?.GetMappings();
 
-            Log.Out("[MagicSorter] Debug - Item details in [SortMe]:");
+            Log.Out("[MagicSorter] Debug - Item details in [MagicSort]:");
 
             foreach (var itemStack in items)
             {
@@ -449,209 +450,154 @@ namespace MagicSorter
                 var itemClass = itemStack.itemValue?.ItemClass;
                 if (itemClass == null) continue;
 
-                var internalName = itemClass.Name ?? "(null)";
-                var localizedName = itemClass.GetLocalizedItemName() ?? internalName;
-                var groups = itemClass.Groups ?? new string[0];
-                var groupsStr = groups.Length > 0 ? string.Join(", ", groups) : "(none)";
-
-                // Get additional ItemClass fields for investigation
-                string customIcon = null;
-                string descriptionKey = null;
-                string extendsName = null;
-                string parentName = null;
-                var allProps = new List<string>();
-
-                try
-                {
-                    var customIconProp = itemClass.GetType().GetProperty("CustomIcon");
-                    if (customIconProp != null)
-                        customIcon = customIconProp.GetValue(itemClass) as string;
-
-                    var descProp = itemClass.GetType().GetProperty("DescriptionKey");
-                    if (descProp != null)
-                        descriptionKey = descProp.GetValue(itemClass) as string;
-
-                    // Check for Extends property (inheritance from items.xml)
-                    var properties = itemClass.Properties;
-                    if (properties != null)
-                    {
-                        if (properties.Contains("Extends"))
-                        {
-                            extendsName = properties.GetString("Extends");
-                        }
-                    }
-
-                    // Try to get parent/base class if exists
-                    var parentField = itemClass.GetType().GetField("parent",
-                        System.Reflection.BindingFlags.Public |
-                        System.Reflection.BindingFlags.NonPublic |
-                        System.Reflection.BindingFlags.Instance);
-                    if (parentField != null)
-                    {
-                        var parent = parentField.GetValue(itemClass);
-                        if (parent != null)
-                        {
-                            var parentNameProp = parent.GetType().GetProperty("Name");
-                            if (parentNameProp != null)
-                                parentName = parentNameProp.GetValue(parent) as string;
-                        }
-                    }
-
-                    // List all string properties for debugging
-                    foreach (var prop in itemClass.GetType().GetProperties())
-                    {
-                        try
-                        {
-                            if (prop.PropertyType == typeof(string) && prop.CanRead)
-                            {
-                                var val = prop.GetValue(itemClass) as string;
-                                if (!string.IsNullOrEmpty(val) && val.Length < 100)
-                                {
-                                    allProps.Add($"{prop.Name}={val}");
-                                }
-                            }
-                        }
-                        catch { }
-                    }
-                }
-                catch { }
-
-                // Check source of categories
-                bool inMappings = mappings != null && mappings.Items.ContainsKey(internalName);
-                bool fromPattern = !inMappings && _resolver != null && HasPatternMatch(internalName);
-                var mappingStatus = inMappings ? "MAPPED" : (fromPattern ? "PATTERN" : "FALLBACK");
-
-                // Get resolved categories
-                var categories = GetItemCategories(itemStack);
-                var categoriesStr = categories.Count > 0 ? string.Join(", ", categories) : "(none)";
-
-                Log.Out($"  {localizedName} x{itemStack.count}:");
-                Log.Out($"    Internal name: {internalName}");
-                if (!string.IsNullOrEmpty(extendsName))
-                    Log.Out($"    Extends: {extendsName}");
-                if (!string.IsNullOrEmpty(parentName))
-                    Log.Out($"    Parent: {parentName}");
-                if (!string.IsNullOrEmpty(customIcon))
-                    Log.Out($"    CustomIcon: {customIcon}");
-                if (!string.IsNullOrEmpty(descriptionKey))
-                    Log.Out($"    DescriptionKey: {descriptionKey}");
-                Log.Out($"    Game Groups: {groupsStr}");
-                Log.Out($"    Resolved categories: {categoriesStr} [{mappingStatus}]");
-                if (allProps.Count > 0)
-                    Log.Out($"    All string props: {string.Join(", ", allProps)}");
+                LogItemDebugInfo(itemStack, itemClass, mappings);
             }
 
             if (items.All(s => s.IsEmpty()))
             {
-                Log.Out("[MagicSorter] [SortMe] is empty");
+                Log.Out("[MagicSorter] [MagicSort] is empty");
             }
         }
 
-        private bool HasPatternMatch(string itemName)
+        private void LogItemDebugInfo(ItemStack itemStack, ItemClass itemClass, Models.MappingData mappings)
         {
-            // Check if the item name would match any of our patterns
-            if (string.IsNullOrEmpty(itemName))
-                return false;
+            var internalName = itemClass.Name ?? "(null)";
+            var localizedName = itemClass.GetLocalizedItemName() ?? internalName;
+            var groups = itemClass.Groups ?? new string[0];
+            var groupsStr = groups.Length > 0 ? string.Join(", ", groups) : "(none)";
 
-            // Check gun patterns
-            if (itemName.StartsWith("gunHandgun", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("gunShotgun", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("gunRifle", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("gunMG", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("gunBow", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("gunCrossbow", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("gunExplosives", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("gunRocketLauncher", StringComparison.OrdinalIgnoreCase))
-                return true;
+            // Extract additional properties via reflection
+            var (customIcon, descriptionKey, extendsName, parentName, allProps) = ExtractItemClassProperties(itemClass);
 
-            // Melee weapons
-            if (itemName.StartsWith("meleeWpnBlade", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("meleeWpnClub", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("meleeWpnSpear", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("meleeWpnSledge", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("meleeWpnKnuckles", StringComparison.OrdinalIgnoreCase))
-                return true;
+            // Determine mapping source
+            bool inMappings = mappings != null && mappings.Items.ContainsKey(internalName);
+            bool fromPattern = !inMappings && _resolver != null && _resolver.HasPatternMatch(internalName);
+            var mappingStatus = inMappings ? "MAPPED" : (fromPattern ? "PATTERN" : "FALLBACK");
 
-            // Tools
-            if (itemName.StartsWith("meleeToolPick", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("meleeToolAxe", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("meleeToolShovel", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("meleeToolRepair", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("meleeToolSalvage", StringComparison.OrdinalIgnoreCase))
-                return true;
+            // Get resolved categories
+            var categories = GetItemCategories(itemStack);
+            var categoriesStr = categories.Count > 0 ? string.Join(", ", categories) : "(none)";
 
-            // Ammo
-            if (itemName.StartsWith("ammo", StringComparison.OrdinalIgnoreCase))
-                return true;
+            // Log all details
+            Log.Out($"  {localizedName} x{itemStack.count}:");
+            Log.Out($"    Internal name: {internalName}");
+            if (!string.IsNullOrEmpty(extendsName))
+                Log.Out($"    Extends: {extendsName}");
+            if (!string.IsNullOrEmpty(parentName))
+                Log.Out($"    Parent: {parentName}");
+            if (!string.IsNullOrEmpty(customIcon))
+                Log.Out($"    CustomIcon: {customIcon}");
+            if (!string.IsNullOrEmpty(descriptionKey))
+                Log.Out($"    DescriptionKey: {descriptionKey}");
+            Log.Out($"    Game Groups: {groupsStr}");
+            Log.Out($"    Resolved categories: {categoriesStr} [{mappingStatus}]");
+            if (allProps.Count > 0)
+                Log.Out($"    All string props: {string.Join(", ", allProps)}");
+        }
 
-            // Throwables
-            if (itemName.StartsWith("thrownDynamite", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("thrownPipe", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("thrownGrenade", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("thrownFrag", StringComparison.OrdinalIgnoreCase))
-                return true;
+        private (string customIcon, string descriptionKey, string extendsName, string parentName, List<string> allProps) ExtractItemClassProperties(ItemClass itemClass)
+        {
+            string customIcon = null;
+            string descriptionKey = null;
+            string extendsName = null;
+            string parentName = null;
+            var allProps = new List<string>();
 
-            // Armor
-            if (itemName.StartsWith("armor", StringComparison.OrdinalIgnoreCase))
-                return true;
+            try
+            {
+                var customIconProp = itemClass.GetType().GetProperty("CustomIcon");
+                if (customIconProp != null)
+                    customIcon = customIconProp.GetValue(itemClass) as string;
 
-            // Resources
-            if (itemName.StartsWith("resource", StringComparison.OrdinalIgnoreCase))
-                return true;
+                var descProp = itemClass.GetType().GetProperty("DescriptionKey");
+                if (descProp != null)
+                    descriptionKey = descProp.GetValue(itemClass) as string;
 
-            // Food and drinks
-            if (itemName.StartsWith("drink", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("food", StringComparison.OrdinalIgnoreCase))
-                return true;
+                // Check for Extends property (inheritance from items.xml)
+                var properties = itemClass.Properties;
+                if (properties != null && properties.Contains("Extends"))
+                {
+                    extendsName = properties.GetString("Extends");
+                }
 
-            // Medical
-            if (itemName.StartsWith("drug", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("medical", StringComparison.OrdinalIgnoreCase))
-                return true;
+                // Try to get parent/base class if exists
+                var parentField = itemClass.GetType().GetField("parent",
+                    System.Reflection.BindingFlags.Public |
+                    System.Reflection.BindingFlags.NonPublic |
+                    System.Reflection.BindingFlags.Instance);
+                if (parentField != null)
+                {
+                    var parent = parentField.GetValue(itemClass);
+                    if (parent != null)
+                    {
+                        var parentNameProp = parent.GetType().GetProperty("Name");
+                        if (parentNameProp != null)
+                            parentName = parentNameProp.GetValue(parent) as string;
+                    }
+                }
 
-            // Mods
-            if (itemName.StartsWith("mod", StringComparison.OrdinalIgnoreCase))
-                return true;
+                // List all string properties for debugging
+                foreach (var prop in itemClass.GetType().GetProperties())
+                {
+                    try
+                    {
+                        if (prop.PropertyType == typeof(string) && prop.CanRead)
+                        {
+                            var val = prop.GetValue(itemClass) as string;
+                            if (!string.IsNullOrEmpty(val) && val.Length < 100)
+                            {
+                                allProps.Add($"{prop.Name}={val}");
+                            }
+                        }
+                    }
+                    catch { }
+                }
+            }
+            catch { }
 
-            // Vehicle parts
-            if (itemName.StartsWith("vehicle", StringComparison.OrdinalIgnoreCase))
-                return true;
-
-            // Books and schematics
-            if (itemName.StartsWith("schematic", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("book", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("perkBook", StringComparison.OrdinalIgnoreCase))
-                return true;
-
-            // Seeds/planting
-            if (itemName.StartsWith("planted", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("seed", StringComparison.OrdinalIgnoreCase))
-                return true;
-
-            return false;
+            return (customIcon, descriptionKey, extendsName, parentName, allProps);
         }
 
         private int LevenshteinDistance(string s1, string s2)
         {
-            int[,] d = new int[s1.Length + 1, s2.Length + 1];
-
-            for (int i = 0; i <= s1.Length; i++)
-                d[i, 0] = i;
-            for (int j = 0; j <= s2.Length; j++)
-                d[0, j] = j;
-
-            for (int i = 1; i <= s1.Length; i++)
+            // Optimize: ensure s1 is the shorter string to minimize memory usage
+            if (s1.Length > s2.Length)
             {
-                for (int j = 1; j <= s2.Length; j++)
-                {
-                    int cost = (s1[i - 1] == s2[j - 1]) ? 0 : 1;
-                    d[i, j] = Math.Min(
-                        Math.Min(d[i - 1, j] + 1, d[i, j - 1] + 1),
-                        d[i - 1, j - 1] + cost);
-                }
+                var temp = s1;
+                s1 = s2;
+                s2 = temp;
             }
 
-            return d[s1.Length, s2.Length];
+            int len1 = s1.Length;
+            int len2 = s2.Length;
+
+            // Use two rows instead of full 2D array - O(min(m,n)) space instead of O(m*n)
+            int[] prevRow = new int[len1 + 1];
+            int[] currRow = new int[len1 + 1];
+
+            // Initialize first row
+            for (int i = 0; i <= len1; i++)
+                prevRow[i] = i;
+
+            for (int j = 1; j <= len2; j++)
+            {
+                currRow[0] = j;
+
+                for (int i = 1; i <= len1; i++)
+                {
+                    int cost = (s1[i - 1] == s2[j - 1]) ? 0 : 1;
+                    currRow[i] = Math.Min(
+                        Math.Min(prevRow[i] + 1, currRow[i - 1] + 1),
+                        prevRow[i - 1] + cost);
+                }
+
+                // Swap rows
+                var swap = prevRow;
+                prevRow = currRow;
+                currRow = swap;
+            }
+
+            return prevRow[len1];
         }
 
         private void MissingInternal()
@@ -661,7 +607,7 @@ namespace MagicSorter
 
             if (sortMeContainer == null)
             {
-                Log.Error("[MagicSorter] No [SortMe] container found in range.");
+                Log.Error("[MagicSorter] No [MagicSort] container found in range.");
                 return;
             }
 
@@ -670,7 +616,7 @@ namespace MagicSorter
             var items = sortMeContainer.GetItems();
             if (items == null)
             {
-                Log.Error("[MagicSorter] Could not access items in [SortMe] container");
+                Log.Error("[MagicSorter] Could not access items in [MagicSort] container");
                 return;
             }
 
@@ -685,7 +631,7 @@ namespace MagicSorter
 
                 if (categories.Count == 0)
                 {
-                    // No category - would need [Sort:Unknown]
+                    // No category - would need [ms:Unknown]
                     if (!categoryContainers.ContainsKey(UnknownCategory))
                     {
                         if (!missingCategories.ContainsKey(UnknownCategory))
@@ -724,11 +670,11 @@ namespace MagicSorter
             Log.Out("[MagicSorter] Suggested containers to create:");
             foreach (var category in missingCategories.Keys.OrderBy(k => k))
             {
-                Log.Out($"  [Sort:{category}]");
+                Log.Out($"  [ms:{category}]");
             }
         }
 
-        private void PreviewInternal()
+        private void PlanInternal()
         {
             var containers = FindContainersInRange();
             if (containers.Count == 0)
@@ -740,20 +686,20 @@ namespace MagicSorter
             var sortMeContainer = FindSortMeContainer(containers);
             if (sortMeContainer == null)
             {
-                Log.Error("[MagicSorter] No [SortMe] container found in range.");
+                Log.Error("[MagicSorter] No [MagicSort] container found in range.");
                 return;
             }
 
             if (IsContainerEmpty(sortMeContainer))
             {
-                Log.Out("[MagicSorter] Nothing to sort - [SortMe] is empty");
+                Log.Out("[MagicSorter] Nothing to sort - [MagicSort] is empty");
                 return;
             }
 
             var categoryContainers = BuildCategoryMap(containers, sortMeContainer);
             if (categoryContainers.Count == 0)
             {
-                Log.Error("[MagicSorter] No [Sort:X] containers found in range.");
+                Log.Error("[MagicSorter] No [ms:X] containers found in range.");
                 return;
             }
 
@@ -761,12 +707,13 @@ namespace MagicSorter
             var items = sortMeContainer.GetItems();
             if (items == null)
             {
-                Log.Error("[MagicSorter] Could not access items in [SortMe] container");
+                Log.Error("[MagicSorter] Could not access items in [MagicSort] container");
                 return;
             }
 
             var previewResults = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-            var failures = new List<string>();
+            var noContainer = new List<string>();
+            var containerFull = new List<string>();
 
             for (int i = 0; i < items.Length; i++)
             {
@@ -795,8 +742,20 @@ namespace MagicSorter
                 }
                 else
                 {
-                    var catStr = categories.Count > 0 ? string.Join(", ", categories) : "unknown";
-                    failures.Add($"{itemDesc} (category: {catStr})");
+                    // Determine why there's no destination: container full or no container exists
+                    var matchingCategory = FindMatchingCategory(categories, categoryContainers);
+                    var catStr = categories.Count > 0 ? categories[categories.Count - 1] : "unknown";
+
+                    if (matchingCategory != null)
+                    {
+                        // Container exists but is full
+                        containerFull.Add($"{itemDesc} → [ms:{matchingCategory}] is full");
+                    }
+                    else
+                    {
+                        // No container for this category
+                        noContainer.Add($"{itemDesc} (category: {catStr})");
+                    }
                 }
             }
 
@@ -804,24 +763,34 @@ namespace MagicSorter
             Log.Out("[MagicSorter] Preview - items would be sorted as follows:");
             foreach (var kvp in previewResults.OrderBy(k => k.Key))
             {
-                Log.Out($"  [Sort:{kvp.Key}]:");
+                Log.Out($"  [ms:{kvp.Key}]:");
                 foreach (var item in kvp.Value)
                 {
                     Log.Out($"    - {item}");
                 }
             }
 
-            if (failures.Count > 0)
+            if (containerFull.Count > 0)
             {
-                Log.Out("  No destination:");
-                foreach (var item in failures)
+                Log.Out("  Container full:");
+                foreach (var item in containerFull)
+                {
+                    Log.Out($"    - {item}");
+                }
+            }
+
+            if (noContainer.Count > 0)
+            {
+                Log.Out("  No container:");
+                foreach (var item in noContainer)
                 {
                     Log.Out($"    - {item}");
                 }
             }
 
             int totalItems = previewResults.Values.Sum(v => v.Count);
-            Log.Out($"[MagicSorter] Summary: {totalItems} items would be sorted, {failures.Count} would remain");
+            int remainCount = containerFull.Count + noContainer.Count;
+            Log.Out($"[MagicSorter] Summary: {totalItems} items would be sorted, {remainCount} would remain");
         }
 
         private void SortInternal()
@@ -838,14 +807,14 @@ namespace MagicSorter
             var sortMeContainer = FindSortMeContainer(containers);
             if (sortMeContainer == null)
             {
-                Log.Error("[MagicSorter] No [SortMe] container found in range.");
+                Log.Error("[MagicSorter] No [MagicSort] container found in range.");
                 return;
             }
 
             // Check if empty
             if (IsContainerEmpty(sortMeContainer))
             {
-                Log.Out("[MagicSorter] Nothing to sort - [SortMe] is empty");
+                Log.Out("[MagicSorter] Nothing to sort - [MagicSort] is empty");
                 return;
             }
 
@@ -853,7 +822,7 @@ namespace MagicSorter
             var categoryContainers = BuildCategoryMap(containers, sortMeContainer);
             if (categoryContainers.Count == 0)
             {
-                Log.Error("[MagicSorter] No [Sort:X] containers found in range.");
+                Log.Error("[MagicSorter] No [ms:X] containers found in range.");
                 return;
             }
 
@@ -974,7 +943,7 @@ namespace MagicSorter
             var items = sortMe.GetItems();
             if (items == null)
             {
-                Log.Error("[MagicSorter] Could not access items in [SortMe] container");
+                Log.Error("[MagicSorter] Could not access items in [MagicSort] container");
                 return;
             }
 
@@ -999,13 +968,20 @@ namespace MagicSorter
 
                     if (targetContainer == null)
                     {
-                        if (categories.Count == 0)
+                        // Determine why: container full or no container exists
+                        var matchingCategory = FindMatchingCategory(categories, categoryContainers);
+
+                        if (matchingCategory != null)
                         {
-                            Log.Warning($"[MagicSorter] Failed to move {itemName}: unknown category and no [Sort:Unknown] container");
+                            Log.Warning($"[MagicSorter] Failed to move {itemName}: [ms:{matchingCategory}] is full");
+                        }
+                        else if (categories.Count == 0)
+                        {
+                            Log.Warning($"[MagicSorter] Failed to move {itemName}: unknown category and no [ms:Unknown] container");
                         }
                         else
                         {
-                            Log.Warning($"[MagicSorter] Failed to move {itemName}: no [Sort:X] container for category [{string.Join(", ", categories)}]");
+                            Log.Warning($"[MagicSorter] Failed to move {itemName}: no container for category [{string.Join(", ", categories)}]");
                         }
                         _failedCount++;
                         continue;
@@ -1023,7 +999,7 @@ namespace MagicSorter
                 }
                 else
                 {
-                    Log.Warning($"[MagicSorter] Failed to move {itemName}: no space in [Sort:{targetCategory}] containers");
+                    Log.Warning($"[MagicSorter] Failed to move {itemName}: no space in [ms:{targetCategory}] containers");
                     _failedCount++;
                 }
             }
@@ -1097,48 +1073,47 @@ namespace MagicSorter
 
         private ContainerWrapper GetFullestContainerWithSpace(List<ContainerWrapper> containers, ItemStack itemToFit)
         {
-            // Sort by fullness descending (fullest first)
-            var sorted = containers
-                .Select(c => new { Container = c, Fullness = GetContainerFullness(c) })
-                .Where(x => HasSpaceForItem(x.Container, itemToFit))
-                .OrderByDescending(x => x.Fullness)
-                .ToList();
-
-            return sorted.FirstOrDefault()?.Container;
+            // Sort by fullness descending (fullest first), using ContainerWrapper's methods
+            return containers
+                .Where(c => c.HasSpaceFor(itemToFit))
+                .OrderByDescending(c => c.GetFullness())
+                .FirstOrDefault();
         }
 
-        private float GetContainerFullness(ContainerWrapper container)
+        /// <summary>
+        /// Finds a matching category for the item, ignoring space constraints.
+        /// Returns the category name if a container exists (even if full), null otherwise.
+        /// </summary>
+        private string FindMatchingCategory(List<string> itemCategories,
+            Dictionary<string, List<ContainerWrapper>> categoryContainers)
         {
-            var items = container.GetItems();
-            if (items == null || items.Length == 0) return 0;
-
-            int usedSlots = items.Count(s => !s.IsEmpty());
-            return (float)usedSlots / items.Length;
-        }
-
-        private bool HasSpaceForItem(ContainerWrapper container, ItemStack itemToAdd)
-        {
-            var items = container.GetItems();
-            if (items == null) return false;
-
-            // Check for empty slot
-            if (items.Any(s => s.IsEmpty())) return true;
-
-            // Check for stackable slot (if we know what item we're adding)
-            if (itemToAdd != null && !itemToAdd.IsEmpty())
+            // Check item categories in reverse order (most specific first)
+            for (int i = itemCategories.Count - 1; i >= 0; i--)
             {
-                foreach (var slot in items)
+                var category = itemCategories[i];
+
+                // Try exact match
+                if (categoryContainers.ContainsKey(category))
+                    return category;
+
+                // Try partial match
+                foreach (var kvp in categoryContainers)
                 {
-                    if (!slot.IsEmpty() &&
-                        slot.itemValue.type == itemToAdd.itemValue.type &&
-                        slot.count < slot.itemValue.ItemClass.Stacknumber.Value)
+                    if (kvp.Key.Equals(UnknownCategory, StringComparison.OrdinalIgnoreCase)) continue;
+
+                    if (category.IndexOf(kvp.Key, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        kvp.Key.IndexOf(category, StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        return true;
+                        return kvp.Key;
                     }
                 }
             }
 
-            return false;
+            // Check Unknown fallback
+            if (categoryContainers.ContainsKey(UnknownCategory))
+                return UnknownCategory;
+
+            return null;
         }
 
         private bool TryMoveItem(ContainerWrapper source, int sourceSlot,
@@ -1223,8 +1198,8 @@ namespace MagicSorter
 
         private string GetItemName(ItemStack itemStack)
         {
-            if (itemStack?.itemValue?.ItemClass == null) return "Unknown Item";
-            return itemStack.itemValue.ItemClass.GetLocalizedItemName() ?? itemStack.itemValue.ItemClass.Name ?? "Unknown Item";
+            if (itemStack?.itemValue?.ItemClass == null) return UnknownItemName;
+            return itemStack.itemValue.ItemClass.GetLocalizedItemName() ?? itemStack.itemValue.ItemClass.Name ?? UnknownItemName;
         }
 
         private void LogSummary()
@@ -1233,13 +1208,13 @@ namespace MagicSorter
 
             if (totalSorted == 0 && _failedCount == 0)
             {
-                Log.Out("[MagicSorter] Nothing to sort - [SortMe] is empty");
+                Log.Out("[MagicSorter] Nothing to sort - [MagicSort] is empty");
                 return;
             }
 
             if (totalSorted > 0)
             {
-                var breakdown = string.Join(", ", _sortedCounts.Select(kvp => $"{kvp.Value} to [Sort:{kvp.Key}]"));
+                var breakdown = string.Join(", ", _sortedCounts.Select(kvp => $"{kvp.Value} to [ms:{kvp.Key}]"));
                 Log.Out($"[MagicSorter] Sorted {totalSorted} items: {breakdown}");
             }
 
