@@ -1,8 +1,13 @@
+using System.Diagnostics.CodeAnalysis;
 using MagicSorter.Models;
 using MagicSorter.Services;
 
 namespace MagicSorter
 {
+    /// <summary>
+    ///     Main mod entry point. Instantiated by the game engine.
+    /// </summary>
+    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Global")]
     public class MagicSorterMod : IModApi
     {
         /// <summary>

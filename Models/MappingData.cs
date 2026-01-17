@@ -12,20 +12,21 @@ namespace MagicSorter.Models
         /// <summary>
         ///     Version string for cache invalidation
         /// </summary>
+        // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global - needed for JSON deserialization
         public string Version { get; set; } = "1.0.0";
 
         /// <summary>
         ///     Category definitions with specificity values
         ///     Key: category name (lowercase), Value: CategoryDefinition
         /// </summary>
-        public Dictionary<string, CategoryDefinition> Categories { get; set; }
+        public Dictionary<string, CategoryDefinition> Categories { get; private set; }
             = new Dictionary<string, CategoryDefinition>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         ///     Item-to-category mappings
         ///     Key: item name/ID, Value: list of category names (most general to most specific)
         /// </summary>
-        public Dictionary<string, List<string>> Items { get; set; }
+        public Dictionary<string, List<string>> Items { get; private set; }
             = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
@@ -40,14 +41,14 @@ namespace MagicSorter.Models
         ///     Tag definitions for grouping related categories
         ///     Key: tag name, Value: list of category names
         /// </summary>
-        public Dictionary<string, List<string>> Tags { get; set; }
+        public Dictionary<string, List<string>> Tags { get; private set; }
             = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         ///     Category fallback chain - if no container for a category, try the fallback
         ///     Key: category name, Value: fallback category name
         /// </summary>
-        public Dictionary<string, string> CategoryFallbacks { get; set; }
+        private Dictionary<string, string> CategoryFallbacks { get; set; }
             = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>

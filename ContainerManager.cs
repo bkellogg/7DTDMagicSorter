@@ -443,7 +443,7 @@ namespace MagicSorter
 
             // Determine mapping source
             var inMappings = mappings != null && mappings.Items.ContainsKey(internalName);
-            var fromPattern = !inMappings && _resolver != null && _resolver.HasPatternMatch(internalName);
+            var fromPattern = !inMappings && CategoryResolver.HasPatternMatch(internalName);
             var mappingStatus = inMappings ? "MAPPED" : fromPattern ? "PATTERN" : "FALLBACK";
 
             // Get resolved categories

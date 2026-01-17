@@ -18,7 +18,12 @@
       "Bash(Get-ChildItem \"C:\\\\Users\\\\brend\\\\AppData\\\\Roaming\\\\7DaysToDie\\\\logs\" -Filter \"*.txt\")",
       "Bash(Sort-Object LastWriteTime -Descending)",
       "Bash(Select-Object -First 1)",
-      "Bash(ForEach-Object { $_FullName })"
+      "Bash(ForEach-Object { $_FullName })",
+      "Bash(del \"C:\\\\Users\\\\brend\\\\Documents\\\\projects\\\\7DTDMagicSorter\\\\Services\\\\SimpleJsonParser.cs\")",
+      "Bash(git restore:*)",
+      "Bash(\"C:\\\\Users\\\\brend\\\\Downloads\\\\JetBrains.ReSharper.CommandLineTools.2025.3.1\\\\inspectcode.exe\" \"7DTDMagicSorter.csproj\" -o=\"inspection-results.xml\" --no-build)",
+      "Bash(\"C:\\\\Users\\\\brend\\\\Downloads\\\\JetBrains.ReSharper.CommandLineTools.2025.3.1\\\\inspectcode.exe\" \"7DTDMagicSorter.csproj\" -o=\"inspection-results.xml\" --toolset=17.0)",
+      "Bash(\"C:\\\\Users\\\\brend\\\\Downloads\\\\JetBrains.ReSharper.CommandLineTools.2025.3.1\\\\inspectcode.exe\" \"C:\\\\Users\\\\brend\\\\Documents\\\\projects\\\\7DTDMagicSorter\\\\7DTDMagicSorter.sln\" -o=\"C:\\\\Users\\\\brend\\\\Documents\\\\projects\\\\7DTDMagicSorter\\\\inspection-results.xml\")"
     ]
   }
 }

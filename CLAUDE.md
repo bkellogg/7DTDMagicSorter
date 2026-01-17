@@ -22,6 +22,9 @@ Filter for MagicSorter entries and errors (with 2 lines of context):
 ```powershell
 powershell -Command "Get-Content 'C:\\Users\\brend\\AppData\\Roaming\\7DaysToDie\\logs\\<LOG_FILE>.txt' | Select-String -Pattern 'MagicSorter|Exception|Error' -Context 2,2 | Select-Object -First 50"
 ```
+## Coding Style
+- Prefer guard style if clauses that exit early. That is, reduce nesting where possible.
+
 
 ## Debug Folder
 The `debug/` folder contains screenshots and images used for debugging during development:

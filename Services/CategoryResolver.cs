@@ -253,10 +253,16 @@ namespace MagicSorter.Services
                 itemName.StartsWith("cementMixer", StringComparison.OrdinalIgnoreCase))
                 return new List<string> { "building", "workstations" };
 
-            // Electrical/batteries
+            // Electrical/batteries and power items (but not electricfence which is a trap)
             if (itemName.StartsWith("carBattery", StringComparison.OrdinalIgnoreCase) ||
                 itemName.StartsWith("battery", StringComparison.OrdinalIgnoreCase) ||
-                itemName.IndexOf("Battery", StringComparison.OrdinalIgnoreCase) >= 0)
+                itemName.IndexOf("Battery", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                itemName.StartsWith("generator", StringComparison.OrdinalIgnoreCase) ||
+                itemName.StartsWith("solar", StringComparison.OrdinalIgnoreCase) ||
+                itemName.IndexOf("relay", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                (itemName.StartsWith("electric", StringComparison.OrdinalIgnoreCase) &&
+                 !itemName.StartsWith("electricfence", StringComparison.OrdinalIgnoreCase)) ||
+                itemName.Equals("switch", StringComparison.OrdinalIgnoreCase))
                 return new List<string> { "resources", "electrical" };
 
             // Engines/mechanical
@@ -583,7 +589,7 @@ namespace MagicSorter.Services
         /// <summary>
         ///     Checks if the item name matches any known patterns (used for debug output)
         /// </summary>
-        public bool HasPatternMatch(string itemName)
+        public static bool HasPatternMatch(string itemName)
         {
             return !string.IsNullOrEmpty(itemName) && GetCategoriesFromPattern(itemName).Count > 0;
         }

@@ -1,7 +1,12 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MagicSorter
 {
+    /// <summary>
+    ///     Console command handler. Instantiated by the game engine.
+    /// </summary>
+    [SuppressMessage("ReSharper", "UnusedType.Global")]
     public class ConsoleCmdMagicSort : ConsoleCmdAbstract
     {
         public override string[] getCommands()
@@ -11,7 +16,7 @@ namespace MagicSorter
 
         public override string getDescription()
         {
-            return "Magic item manager. Usage: ms <sort|list|plan|reload|config|mappings> [range]";
+            return "Magic sort manager. Usage: ms <sort|list|plan|reload|config|mappings> [range]";
         }
 
         public override void Execute(List<string> args, CommandSenderInfo senderInfo)

@@ -36,36 +36,36 @@
     </PropertyGroup>
     <ItemGroup>
         <Reference Include="Assembly-CSharp">
-          <HintPath>$(GamePath)\7DaysToDie_Data\Managed\Assembly-CSharp.dll</HintPath>
-          <Private>False</Private>
+            <HintPath>$(GamePath)\7DaysToDie_Data\Managed\Assembly-CSharp.dll</HintPath>
+            <Private>False</Private>
         </Reference>
         <Reference Include="LogLibrary">
-          <HintPath>$(GamePath)\7DaysToDie_Data\Managed\LogLibrary.dll</HintPath>
-          <Private>False</Private>
+            <HintPath>$(GamePath)\7DaysToDie_Data\Managed\LogLibrary.dll</HintPath>
+            <Private>False</Private>
         </Reference>
         <Reference Include="Newtonsoft.Json">
-          <HintPath>$(GamePath)\7DaysToDie_Data\Managed\Newtonsoft.Json.dll</HintPath>
-          <Private>False</Private>
+            <HintPath>$(GamePath)\7DaysToDie_Data\Managed\Newtonsoft.Json.dll</HintPath>
+            <Private>False</Private>
         </Reference>
         <Reference Include="System"/>
         <Reference Include="System.Core"/>
         <Reference Include="System.Data"/>
         <Reference Include="System.Xml"/>
         <Reference Include="UnityEngine">
-          <HintPath>$(GamePath)\7DaysToDie_Data\Managed\UnityEngine.dll</HintPath>
-          <Private>False</Private>
+            <HintPath>$(GamePath)\7DaysToDie_Data\Managed\UnityEngine.dll</HintPath>
+            <Private>False</Private>
         </Reference>
         <Reference Include="UnityEngine.CoreModule">
-          <HintPath>$(GamePath)\7DaysToDie_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
-          <Private>False</Private>
+            <HintPath>$(GamePath)\7DaysToDie_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+            <Private>False</Private>
         </Reference>
         <Reference Include="UnityEngine.PhysicsModule">
-          <HintPath>$(GamePath)\7DaysToDie_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
-          <Private>False</Private>
+            <HintPath>$(GamePath)\7DaysToDie_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
+            <Private>False</Private>
         </Reference>
         <Reference Include="UnityEngine.UI">
-          <HintPath>$(GamePath)\7DaysToDie_Data\Managed\UnityEngine.UI.dll</HintPath>
-          <Private>False</Private>
+            <HintPath>$(GamePath)\7DaysToDie_Data\Managed\UnityEngine.UI.dll</HintPath>
+            <Private>False</Private>
         </Reference>
     </ItemGroup>
     <ItemGroup>
@@ -83,10 +83,10 @@
     </ItemGroup>
     <ItemGroup>
         <None Include="Config\MagicSorter.xml">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Include="mappings.json">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
@@ -96,13 +96,13 @@
         <PropertyGroup>
             <ModFolder>$(GamePath)\Mods\$(ModName)</ModFolder>
         </PropertyGroup>
-        <MakeDir Directories="$(ModFolder)" Condition="!Exists('$(ModFolder)')" />
-        <MakeDir Directories="$(ModFolder)\Config" Condition="!Exists('$(ModFolder)\Config')" />
-        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ModFolder)" />
-        <Copy SourceFiles="$(ProjectDir)ModInfo.xml" DestinationFolder="$(ModFolder)" />
-        <Copy SourceFiles="$(ProjectDir)Config\MagicSorter.xml" DestinationFolder="$(ModFolder)\Config" />
-        <Copy SourceFiles="$(ProjectDir)mappings.json" DestinationFolder="$(ModFolder)" Condition="Exists('$(ProjectDir)mappings.json')" />
-        <Message Text="Deployed $(ModName) to $(ModFolder)" Importance="high" />
+        <MakeDir Directories="$(ModFolder)" Condition="!Exists('$(ModFolder)')"/>
+        <MakeDir Directories="$(ModFolder)\Config" Condition="!Exists('$(ModFolder)\Config')"/>
+        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ModFolder)"/>
+        <Copy SourceFiles="$(ProjectDir)ModInfo.xml" DestinationFolder="$(ModFolder)"/>
+        <Copy SourceFiles="$(ProjectDir)Config\MagicSorter.xml" DestinationFolder="$(ModFolder)\Config"/>
+        <Copy SourceFiles="$(ProjectDir)mappings.json" DestinationFolder="$(ModFolder)" Condition="Exists('$(ProjectDir)mappings.json')"/>
+        <Message Text="Deployed $(ModName) to $(ModFolder)" Importance="high"/>
     </Target>
 
 </Project>
