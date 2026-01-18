@@ -19,6 +19,16 @@ namespace MagicSorter
             return "Magic sort manager. Usage: ms <sort|list|plan|config|mappings> [range]";
         }
 
+        public override int DefaultPermissionLevel
+        {
+            get { return 1000; } // 0 = admin only, 1000 = any player
+        }
+
+        private static void Output(string message)
+        {
+            MagicSorterMod.Output(message);
+        }
+
         public override void Execute(List<string> args, CommandSenderInfo senderInfo)
         {
             if (args.Count == 0)
@@ -38,6 +48,9 @@ namespace MagicSorter
                 case "mappings":
                     ShowMappings();
                     return;
+                case "version":
+                    Output($"[MagicSorter] Version {MagicSorterMod.Version}");
+                    return;
             }
 
             // Get default range from config
@@ -48,7 +61,7 @@ namespace MagicSorter
             if (args.Count > 1)
                 if (!int.TryParse(args[1], out range) || range <= 0)
                 {
-                    Log.Error("[MagicSorter] Invalid range. Usage: ms <sort|list|plan> [range]");
+                    Output("[MagicSorter] Invalid range. Usage: ms <sort|list|plan> [range]");
                     return;
                 }
 
@@ -56,7 +69,7 @@ namespace MagicSorter
             var player = GetPlayerFromSender(senderInfo);
             if (player == null)
             {
-                Log.Error("[MagicSorter] Could not find player. This command must be run by a player.");
+                Output("[MagicSorter] Could not find player. This command must be run by a player.");
                 return;
             }
 
@@ -88,6 +101,9 @@ namespace MagicSorter
                 case "debug":
                     manager.DebugItems();
                     break;
+                case "resort":
+                    manager.Resort();
+                    break;
                 default:
                     ShowHelp();
                     break;
@@ -99,15 +115,15 @@ namespace MagicSorter
             var config = MagicSorterMod.Config;
             if (config == null)
             {
-                Log.Out("[MagicSorter] No configuration loaded");
+                Output("[MagicSorter] No configuration loaded");
                 return;
             }
 
-            Log.Out("[MagicSorter] Current configuration:");
-            Log.Out($"  FallbackToBuiltIn: {config.FallbackToBuiltIn}");
-            Log.Out($"  UseSpecificityResolution: {config.UseSpecificityResolution}");
-            Log.Out($"  DefaultRange: {config.DefaultRange}");
-            Log.Out($"  DebugLogging: {config.DebugLogging}");
+            Output("[MagicSorter] Current configuration:");
+            Output($"  FallbackToBuiltIn: {config.FallbackToBuiltIn}");
+            Output($"  UseSpecificityResolution: {config.UseSpecificityResolution}");
+            Output($"  DefaultRange: {config.DefaultRange}");
+            Output($"  DebugLogging: {config.DebugLogging}");
         }
 
         private static void ShowMappings()
@@ -115,16 +131,15 @@ namespace MagicSorter
             var loader = MagicSorterMod.MappingLoader;
             if (loader == null)
             {
-                Log.Out("[MagicSorter] Mapping loader not initialized");
+                Output("[MagicSorter] Mapping loader not initialized");
                 return;
             }
 
-            Log.Out($"[MagicSorter] Mappings status: {loader.GetStatus()}");
+            Output($"[MagicSorter] Mappings status: {loader.GetStatus()}");
             if (!loader.IsInitialized)
             {
                 return;
             }
-
 
             var mappings = loader.GetMappings();
             if (mappings == null)
@@ -132,25 +147,27 @@ namespace MagicSorter
                 return;
             }
 
-            Log.Out($"  Aliases defined: {mappings.ContainerAliases.Count}");
-            Log.Out($"  Tags defined: {mappings.Tags.Count}");
+            Output($"  Aliases defined: {mappings.ContainerAliases.Count}");
+            Output($"  Tags defined: {mappings.Tags.Count}");
         }
 
         private static void ShowHelp()
         {
             var defaultRange = MagicSorterMod.Config?.DefaultRange ?? 20;
-            Log.Out("[MagicSorter] Usage: ms <command> [range]");
-            Log.Out("  sort     - Sort items from [MagicSort] into [ms:X] containers");
-            Log.Out("  list     - List all recognized containers in range");
-            Log.Out("  plan     - Show what items would be sorted where (dry run)");
-            Log.Out("  scan     - Show items in [MagicSort] grouped by category");
-            Log.Out("  missing  - Show categories that need containers");
-            Log.Out("  suggest  - Show unsortable items and suggested containers");
-            Log.Out("  invalid  - Show containers with invalid/unknown labels");
-            Log.Out("  debug    - Show internal item names for mapping");
-            Log.Out("  config   - Show current configuration");
-            Log.Out("  mappings - Show loaded mappings status");
-            Log.Out($"  [range]  - Optional search radius (default: {defaultRange})");
+            Output("[MagicSorter] Usage: ms <command> [range]");
+            Output("  sort     - Sort items from [MagicSort] into [ms:X] containers");
+            Output("  resort   - Re-sort all items already in [ms:X] containers");
+            Output("  list     - List all recognized containers in range");
+            Output("  plan     - Show what items would be sorted where (dry run)");
+            Output("  scan     - Show items in [MagicSort] grouped by category");
+            Output("  missing  - Show categories that need containers");
+            Output("  suggest  - Show unsortable items and suggested containers");
+            Output("  invalid  - Show containers with invalid/unknown labels");
+            Output("  debug    - Show internal item names for mapping");
+            Output("  config   - Show current configuration");
+            Output("  mappings - Show loaded mappings status");
+            Output("  version  - Show mod version");
+            Output($"  [range]  - Optional search radius (default: {defaultRange})");
         }
 
         private static EntityPlayer GetPlayerFromSender(CommandSenderInfo senderInfo)

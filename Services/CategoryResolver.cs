@@ -1,6 +1,6 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
+using MagicSorter.Extensions;
 using MagicSorter.Models;
 
 namespace MagicSorter.Services
@@ -64,327 +64,313 @@ namespace MagicSorter.Services
 
             // Schematics - check EARLY because some schematics have misleading prefixes
             // (e.g., plantedGraceCorn1Schematic starts with "planted" but is a schematic)
-            if (itemName.StartsWith("schematic", StringComparison.OrdinalIgnoreCase) ||
-                itemName.IndexOf("Schematic", StringComparison.OrdinalIgnoreCase) >= 0)
+            if (itemName.HasPrefix("schematic") || itemName.Includes("Schematic"))
                 return new List<string> { "books", "schematics" };
 
+            // Mechanical parts and electrical parts - resources first
+            if (itemName.Includes("MechanicalParts") || itemName.Includes("Mechanical_Parts"))
+                return new List<string> { "resources", "mechanical" };
+            if (itemName.Includes("ElectricParts") || itemName.Includes("Electric_Parts") ||
+                itemName.Includes("ElectricalParts"))
+                return new List<string> { "resources", "electrical" };
+
             // Weapon/gun parts - check BEFORE weapon patterns (e.g., gunRocketLauncherParts, gunShotgunParts)
-            if (itemName.IndexOf("Parts", StringComparison.OrdinalIgnoreCase) >= 0 &&
-                (itemName.StartsWith("gun", StringComparison.OrdinalIgnoreCase) ||
-                 itemName.StartsWith("melee", StringComparison.OrdinalIgnoreCase)))
+            if (itemName.Includes("Parts") &&
+                (itemName.HasPrefix("gun") || itemName.HasPrefix("melee")))
                 return new List<string> { "resources", "mechanical" };
 
             // Guns - check most specific patterns first
-            if (itemName.StartsWith("gunBot", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("gunBot"))
                 return new List<string> { "weapons", "turrets" };
             // SMG-5 is gunHandgunT3SMG5 - check for SMG before generic handgun pattern
-            if (itemName.IndexOf("SMG", StringComparison.OrdinalIgnoreCase) >= 0)
+            if (itemName.Includes("SMG"))
                 return new List<string> { "weapons", "ranged", "smgs" };
-            if (itemName.StartsWith("gunHandgun", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("gunHandgun"))
                 return new List<string> { "weapons", "ranged", "pistols" };
-            if (itemName.StartsWith("gunShotgun", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("gunShotgun"))
                 return new List<string> { "weapons", "ranged", "shotguns" };
-            if (itemName.StartsWith("gunRifle", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("gunTactical", StringComparison.OrdinalIgnoreCase) ||
-                itemName.IndexOf("AssaultRifle", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                itemName.IndexOf("SniperRifle", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                itemName.IndexOf("HuntingRifle", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                itemName.IndexOf("LeverAction", StringComparison.OrdinalIgnoreCase) >= 0)
+            if (itemName.HasPrefix("gunRifle") || itemName.HasPrefix("gunTactical") ||
+                itemName.Includes("AssaultRifle") || itemName.Includes("SniperRifle") ||
+                itemName.Includes("HuntingRifle") || itemName.Includes("LeverAction"))
                 return new List<string> { "weapons", "ranged", "rifles" };
             // Tactical AR and AK-47 are gunMG* but should be rifles, check before generic MG pattern
-            if (itemName.IndexOf("TacticalAR", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                itemName.IndexOf("AK47", StringComparison.OrdinalIgnoreCase) >= 0)
+            if (itemName.Includes("TacticalAR") || itemName.Includes("AK47"))
                 return new List<string> { "weapons", "ranged", "rifles" };
-            if (itemName.StartsWith("gunMG", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("gunMG"))
                 return new List<string> { "weapons", "ranged", "machineguns" };
-            if (itemName.StartsWith("gunBow", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("gunCrossbow", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("gunBow") || itemName.HasPrefix("gunCrossbow"))
                 return new List<string> { "weapons", "ranged", "bows" };
-            if (itemName.StartsWith("gunExplosives", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("gunRocketLauncher", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("gunExplosives") || itemName.HasPrefix("gunRocketLauncher"))
                 return new List<string> { "weapons", "ranged", "explosives" };
 
             // Melee weapons
-            if (itemName.StartsWith("meleeWpnBlade", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("meleeWpnBlade"))
                 return new List<string> { "weapons", "melee", "blades" };
-            if (itemName.StartsWith("meleeWpnClub", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("meleeWpnClub") || itemName.Includes("PipeBaton") ||
+                itemName.Includes("BaseballBat"))
                 return new List<string> { "weapons", "melee", "clubs" };
-            if (itemName.StartsWith("meleeWpnSpear", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("meleeWpnSpear"))
                 return new List<string> { "weapons", "melee", "spears" };
-            if (itemName.StartsWith("meleeWpnSledge", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("meleeWpnSledge"))
                 return new List<string> { "weapons", "melee", "sledges" };
-            if (itemName.StartsWith("meleeWpnKnuckles", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("meleeWpnKnuckles"))
                 return new List<string> { "weapons", "melee", "knuckles" };
+            // Generic melee weapons catch-all
+            if (itemName.HasPrefix("meleeWpn") ||
+                itemName.HasPrefix("melee") && !itemName.HasPrefix("meleeTool"))
+                return new List<string> { "weapons", "melee" };
 
             // Tools - specific patterns first
-            if (itemName.StartsWith("meleeToolTorch", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("meleeToolTorch"))
                 return new List<string> { "building", "lighting" };
-            if (itemName.StartsWith("meleeToolPick", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("meleeToolPick"))
                 return new List<string> { "tools", "miningtools" };
-            if (itemName.StartsWith("meleeToolAxe", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("meleeToolShovel", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("meleeToolAxe") || itemName.HasPrefix("meleeToolShovel"))
                 return new List<string> { "tools", "harvestingtools" };
-            if (itemName.StartsWith("meleeToolRepair", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("meleeToolSalvage", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("meleeToolRepair") || itemName.HasPrefix("meleeToolSalvage"))
                 return new List<string> { "tools", "repairtools" };
 
             // Tool items (workstations, cooking, etc.)
-            if (itemName.StartsWith("toolForge", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("toolForge"))
                 return new List<string> { "building", "workstations" };
-            if (itemName.StartsWith("tool", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("tool"))
                 return new List<string> { "tools" };
 
+            // Ammo components (bullet tips, casings, buckshot, gunpowder)
+            if (itemName.Includes("BulletTip") || itemName.Includes("BulletCasing") ||
+                itemName.Includes("Buckshot") || itemName.Includes("GunPowder"))
+                return new List<string> { "ammo", "ammocomponents" };
+
             // Ammo - specific patterns first (exclude non-ammo items that start with ammo)
-            if (itemName.StartsWith("ammoGasCan", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("ammoGasCan"))
                 return new List<string> { "resources", "chemicals" };
-            if (itemName.StartsWith("ammo9mm", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("ammo9mm"))
                 return new List<string> { "ammo", "ammo9mm" };
-            if (itemName.StartsWith("ammo44Magnum", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("ammo44Magnum"))
                 return new List<string> { "ammo", "ammo44" };
-            if (itemName.StartsWith("ammo762mm", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("ammo762mm"))
                 return new List<string> { "ammo", "ammo762" };
-            if (itemName.StartsWith("ammoShotgun", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("ammoShotgun"))
                 return new List<string> { "ammo", "ammoshotgun" };
-            if (itemName.StartsWith("ammoArrow", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("ammoCrossbow", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("ammoArrow") || itemName.HasPrefix("ammoCrossbow"))
                 return new List<string> { "ammo", "ammoarrow" };
-            if (itemName.StartsWith("ammoRocket", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("ammoRocket"))
                 return new List<string> { "ammo", "ammorocket" };
-            if (itemName.StartsWith("ammo", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("ammo"))
                 return new List<string> { "ammo" };
 
             // Throwables
-            if (itemName.StartsWith("thrownDynamite", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("thrownPipe", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("thrownGrenade", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("thrownFrag", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("thrownMolotov", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("thrownDynamite") || itemName.HasPrefix("thrownPipe") ||
+                itemName.HasPrefix("thrownGrenade") || itemName.HasPrefix("thrownFrag") ||
+                itemName.HasPrefix("thrownMolotov"))
                 return new List<string> { "weapons", "explosives" };
 
             // Armor
-            if (itemName.StartsWith("armor", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("armor"))
             {
-                if (itemName.IndexOf("Helmet", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    itemName.IndexOf("Head", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (itemName.Includes("Helmet") || itemName.Includes("Head"))
                     return new List<string> { "armor", "armorhead" };
-                if (itemName.IndexOf("Chest", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (itemName.Includes("Chest"))
                     return new List<string> { "armor", "armorchest" };
-                if (itemName.IndexOf("Legs", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (itemName.Includes("Legs"))
                     return new List<string> { "armor", "armorlegs" };
-                if (itemName.IndexOf("Boots", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    itemName.IndexOf("Feet", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (itemName.Includes("Boots") || itemName.Includes("Feet"))
                     return new List<string> { "armor", "armorboots" };
-                if (itemName.IndexOf("Gloves", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    itemName.IndexOf("Hands", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (itemName.Includes("Gloves") || itemName.Includes("Hands"))
                     return new List<string> { "armor", "armorgloves" };
                 return new List<string> { "armor" };
             }
 
             // Resources
-            if (itemName.StartsWith("resourceForged", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("resourceForged"))
                 return new List<string> { "resources", "craftedresources" };
-            if (itemName.StartsWith("resourceScrap", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("resourceScrap"))
                 return new List<string> { "resources", "rawresources" };
-            if (itemName.StartsWith("resource", StringComparison.OrdinalIgnoreCase))
+            if (itemName.Includes("rottingFlesh") || itemName.Includes("rottenFlesh"))
+                return new List<string> { "food", "farming" };
+            // Animal fat - food first, then rawresources (matches [ms:Natural] and [ms:From Earth])
+            if (itemName.Includes("AnimalFat"))
+                return new List<string> { "food", "resources", "rawresources" };
+            // Organic resources (bones, feathers, hides, leather, etc.)
+            if (itemName.Includes("Bone") || itemName.Includes("Feather") ||
+                itemName.Includes("AnimalHide") || itemName.Includes("Leather"))
+                return new List<string> { "resources", "organic" };
+            // Ores and mining resources
+            if (itemName.Includes("Ore") || itemName.Includes("OreDeposit") ||
+                itemName.Includes("OilShale") || itemName.Includes("Nitrate") ||
+                itemName.Includes("Coal"))
+                return new List<string> { "resources", "ores" };
+            // Honey goes to food
+            if (itemName.Includes("Honey"))
+                return new List<string> { "food" };
+            if (itemName.HasPrefix("resource"))
                 return new List<string> { "resources" };
 
             // Food and drinks
-            if (itemName.StartsWith("drink", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("drink"))
                 return new List<string> { "food", "drinks" };
-            if (itemName.StartsWith("foodCan", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("foodCan"))
                 return new List<string> { "food", "cannedfood" };
-            if (itemName.StartsWith("foodRaw", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("foodCrop", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("foodRaw") || itemName.HasPrefix("foodCrop"))
                 return new List<string> { "food", "rawfood" };
-            if (itemName.StartsWith("food", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("food"))
                 return new List<string> { "food", "cookedfood" };
 
             // Medical
-            if (itemName.StartsWith("drugVitamin", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("drugSteroid", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("drugRecog", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("drugFort", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("drugVitamin") || itemName.HasPrefix("drugSteroid") ||
+                itemName.HasPrefix("drugRecog") || itemName.HasPrefix("drugFort"))
                 return new List<string> { "medical", "buffs" };
-            if (itemName.StartsWith("drug", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("drug"))
                 return new List<string> { "medical", "medicine" };
-            if (itemName.StartsWith("medicalFirstAid", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("medicalBandage", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("medicalFirstAid") || itemName.HasPrefix("medicalBandage"))
                 return new List<string> { "medical", "firstaid" };
-            if (itemName.StartsWith("medical", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("medical") && !itemName.Includes("journal"))
                 return new List<string> { "medical" };
 
             // Mods
-            if (itemName.StartsWith("modGun", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("modGun"))
                 return new List<string> { "mods", "weaponmods" };
-            if (itemName.StartsWith("modArmor", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("modArmor"))
                 return new List<string> { "mods", "armormods" };
-            if (itemName.StartsWith("mod", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("mod"))
                 return new List<string> { "mods" };
 
-            // Vehicle parts
-            if (itemName.StartsWith("vehicle", StringComparison.OrdinalIgnoreCase))
+            // Vehicle parts (but not vehicle books/magazines)
+            if (itemName.HasPrefix("vehicle") && !itemName.Includes("book") &&
+                !itemName.Includes("magazine") && !itemName.Includes("journal") &&
+                !itemName.Includes("schematic"))
                 return new List<string> { "vehicles", "vehicleparts" };
 
-            // Books (schematics already handled at top of function)
-            if (itemName.StartsWith("book", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("perkBook", StringComparison.OrdinalIgnoreCase))
+            // Books, magazines, journals (schematics already handled at top of function)
+            if (itemName.HasPrefix("book") || itemName.HasPrefix("perkBook") ||
+                itemName.Includes("magazine") || itemName.Includes("journal"))
                 return new List<string> { "books", "skillbooks" };
 
-            // Seeds/planting
-            if (itemName.StartsWith("planted", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("seed", StringComparison.OrdinalIgnoreCase))
+            // Seeds/planting (including tree seeds like treePineSeed, treePlantable, etc.)
+            if (itemName.HasPrefix("planted") || itemName.HasPrefix("seed") ||
+                itemName.HasPrefix("tree") || itemName.Includes("Seed") ||
+                itemName.Includes("Plantable"))
                 return new List<string> { "food", "farming" };
 
             // Lighting (but not flashlights which are tools, or light mods)
-            if ((itemName.IndexOf("Torch", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                 itemName.IndexOf("Candle", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                 itemName.IndexOf("Lantern", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                 itemName.StartsWith("light", StringComparison.OrdinalIgnoreCase) ||
-                 itemName.IndexOf("ceilingLight", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                 itemName.IndexOf("wallLight", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                 itemName.IndexOf("floorLight", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                 itemName.IndexOf("Fluorescent", StringComparison.OrdinalIgnoreCase) >= 0) &&
-                !itemName.StartsWith("flashlight", StringComparison.OrdinalIgnoreCase) &&
-                !itemName.StartsWith("mod", StringComparison.OrdinalIgnoreCase))
+            if ((itemName.Includes("Torch") || itemName.Includes("Candle") ||
+                 itemName.Includes("Lantern") || itemName.HasPrefix("light") ||
+                 itemName.Includes("ceilingLight") || itemName.Includes("wallLight") ||
+                 itemName.Includes("floorLight") || itemName.Includes("Fluorescent")) &&
+                !itemName.HasPrefix("flashlight") && !itemName.HasPrefix("mod"))
                 return new List<string> { "building", "lighting" };
 
             // Workstations
-            if (itemName.StartsWith("crucible", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("forge", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("workbench", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("campfire", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("chemistryStation", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("cementMixer", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("crucible") || itemName.HasPrefix("forge") ||
+                itemName.HasPrefix("workbench") || itemName.HasPrefix("campfire") ||
+                itemName.HasPrefix("chemistryStation") || itemName.HasPrefix("cementMixer"))
                 return new List<string> { "building", "workstations" };
 
             // Electrical/batteries and power items (but not electricfence which is a trap)
-            if (itemName.StartsWith("carBattery", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("battery", StringComparison.OrdinalIgnoreCase) ||
-                itemName.IndexOf("Battery", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                itemName.StartsWith("generator", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("solar", StringComparison.OrdinalIgnoreCase) ||
-                itemName.IndexOf("relay", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                (itemName.StartsWith("electric", StringComparison.OrdinalIgnoreCase) &&
-                 !itemName.StartsWith("electricfence", StringComparison.OrdinalIgnoreCase)) ||
-                itemName.Equals("switch", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("carBattery") || itemName.HasPrefix("battery") ||
+                itemName.Includes("Battery") || itemName.HasPrefix("generator") ||
+                itemName.HasPrefix("solar") || itemName.Includes("relay") ||
+                (itemName.HasPrefix("electric") && !itemName.HasPrefix("electricfence")) ||
+                itemName.IsEqual("switch"))
                 return new List<string> { "resources", "electrical" };
 
             // Engines/mechanical
-            if (itemName.StartsWith("engine", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("smallEngine", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("engine") || itemName.HasPrefix("smallEngine"))
                 return new List<string> { "resources", "mechanical" };
 
             // Cooking items (pots, grills, etc)
-            if (itemName.StartsWith("cookingPot", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("cookingGrill", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("beaker", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("cookingPot") || itemName.HasPrefix("cookingGrill") ||
+                itemName.HasPrefix("beaker"))
                 return new List<string> { "tools" };
 
             // Paint
-            if (itemName.StartsWith("paint", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("dyePowder", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("paint") || itemName.HasPrefix("dyePowder"))
                 return new List<string> { "resources" };
 
             // Stone/basic resources
-            if (itemName.StartsWith("stone", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("smallStone", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("cobblestone", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("stone") || itemName.HasPrefix("smallStone") ||
+                itemName.HasPrefix("cobblestone"))
                 return new List<string> { "resources", "rawresources" };
 
+            // Money/cash (old cash, casino tokens, dukes)
+            if (itemName.Includes("oldCash") || itemName.Includes("casinoCoin") ||
+                itemName.Includes("casinoToken"))
+                return new List<string> { "treasure", "dukes" };
+
             // Treasure maps
-            if (itemName.IndexOf("TreasureMap", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                itemName.IndexOf("treasureQuest", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                itemName.IndexOf("BuriedSupplies", StringComparison.OrdinalIgnoreCase) >= 0)
+            if (itemName.Includes("TreasureMap") || itemName.Includes("treasureQuest") ||
+                itemName.Includes("BuriedSupplies"))
                 return new List<string> { "treasure", "treasuremaps" };
 
             // Flashlight and handheld lights
-            if (itemName.StartsWith("flashlight", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("meleeToolFlashlight", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("flashlight") || itemName.HasPrefix("meleeToolFlashlight"))
                 return new List<string> { "tools", "lighting" };
 
             // Wire tool and electrical tools
-            if (itemName.StartsWith("wireTool", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("toolWire", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("wireTool") || itemName.HasPrefix("toolWire"))
                 return new List<string> { "tools", "electrical" };
 
             // Hatches and doors
-            if (itemName.IndexOf("Hatch", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                itemName.IndexOf("Door", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                itemName.IndexOf("Gate", StringComparison.OrdinalIgnoreCase) >= 0)
+            if (itemName.Includes("Hatch") || itemName.Includes("Door") ||
+                itemName.Includes("Gate"))
                 return new List<string> { "building", "doors" };
 
             // Traps and defenses
-            if (itemName.IndexOf("Trap", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                itemName.IndexOf("turret", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                itemName.StartsWith("electricfence", StringComparison.OrdinalIgnoreCase) ||
-                itemName.IndexOf("TriggerPlate", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                itemName.IndexOf("motionSensor", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                itemName.IndexOf("barbedWire", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                itemName.IndexOf("spikes", StringComparison.OrdinalIgnoreCase) >= 0)
+            if (itemName.Includes("Trap") || itemName.Includes("turret") ||
+                itemName.HasPrefix("electricfence") || itemName.Includes("TriggerPlate") ||
+                itemName.Includes("motionSensor") || itemName.Includes("barbedWire") ||
+                itemName.Includes("spikes"))
                 return new List<string> { "building", "traps" };
 
             // Complete vehicles (not parts)
-            if (itemName.Equals("vehicleMinibike", StringComparison.OrdinalIgnoreCase) ||
-                itemName.Equals("vehicleMotorcycle", StringComparison.OrdinalIgnoreCase) ||
-                itemName.Equals("vehicle4x4Truck", StringComparison.OrdinalIgnoreCase) ||
-                itemName.Equals("vehicleGyrocopter", StringComparison.OrdinalIgnoreCase) ||
-                itemName.Equals("vehicleBicycle", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("vehiclePlaceable", StringComparison.OrdinalIgnoreCase))
+            if (itemName.IsEqual("vehicleMinibike") || itemName.IsEqual("vehicleMotorcycle") ||
+                itemName.IsEqual("vehicle4x4Truck") || itemName.IsEqual("vehicleGyrocopter") ||
+                itemName.IsEqual("vehicleBicycle") || itemName.HasPrefix("vehiclePlaceable"))
                 return new List<string> { "vehicles" };
 
             // Wheels and vehicle parts
-            if (itemName.IndexOf("Wheel", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                itemName.IndexOf("vehiclePart", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                itemName.StartsWith("vehicleHandle", StringComparison.OrdinalIgnoreCase) ||
-                itemName.StartsWith("vehicleChassis", StringComparison.OrdinalIgnoreCase))
+            if (itemName.Includes("Wheel") || itemName.Includes("vehiclePart") ||
+                itemName.HasPrefix("vehicleHandle") || itemName.HasPrefix("vehicleChassis"))
                 return new List<string> { "vehicles", "vehicleparts" };
 
             // Quest reward bundles - extract weapon type from name
-            if (itemName.StartsWith("questReward", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("questReward"))
             {
-                if (itemName.IndexOf("Handgun", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    itemName.IndexOf("Pistol", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (itemName.Includes("Handgun") || itemName.Includes("Pistol"))
                     return new List<string> { "weapons", "ranged", "pistols" };
-                if (itemName.IndexOf("Rifle", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    itemName.IndexOf("AK", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (itemName.Includes("Rifle") || itemName.Includes("AK"))
                     return new List<string> { "weapons", "ranged", "rifles" };
-                if (itemName.IndexOf("Shotgun", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (itemName.Includes("Shotgun"))
                     return new List<string> { "weapons", "ranged", "shotguns" };
-                if (itemName.IndexOf("SMG", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    itemName.IndexOf("MachineGun", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (itemName.Includes("SMG") || itemName.Includes("MachineGun"))
                     return new List<string> { "weapons", "ranged", "smgs" };
-                if (itemName.IndexOf("Bow", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    itemName.IndexOf("Crossbow", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (itemName.Includes("Bow") || itemName.Includes("Crossbow"))
                     return new List<string> { "weapons", "ranged", "bows" };
-                if (itemName.IndexOf("Blade", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    itemName.IndexOf("Knife", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    itemName.IndexOf("Machete", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (itemName.Includes("Blade") || itemName.Includes("Knife") ||
+                    itemName.Includes("Machete"))
                     return new List<string> { "weapons", "melee", "blades" };
-                if (itemName.IndexOf("Club", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    itemName.IndexOf("Bat", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (itemName.Includes("Club") || itemName.Includes("Bat"))
                     return new List<string> { "weapons", "melee", "clubs" };
-                if (itemName.IndexOf("Sledge", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (itemName.Includes("Sledge"))
                     return new List<string> { "weapons", "melee", "sledges" };
                 // Generic weapon bundle
                 return new List<string> { "weapons" };
             }
 
             // Ammo bundles - extract ammo type from name
-            if (itemName.StartsWith("ammoBundle", StringComparison.OrdinalIgnoreCase))
+            if (itemName.HasPrefix("ammoBundle"))
             {
-                if (itemName.IndexOf("9mm", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (itemName.Includes("9mm"))
                     return new List<string> { "ammo", "ammo9mm" };
-                if (itemName.IndexOf("44", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    itemName.IndexOf("Magnum", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (itemName.Includes("44") || itemName.Includes("Magnum"))
                     return new List<string> { "ammo", "ammo44" };
-                if (itemName.IndexOf("762", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (itemName.Includes("762"))
                     return new List<string> { "ammo", "ammo762" };
-                if (itemName.IndexOf("Shotgun", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (itemName.Includes("Shotgun"))
                     return new List<string> { "ammo", "ammoshotgun" };
-                if (itemName.IndexOf("Arrow", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    itemName.IndexOf("Bolt", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (itemName.Includes("Arrow") || itemName.Includes("Bolt"))
                     return new List<string> { "ammo", "ammoarrow" };
-                if (itemName.IndexOf("Rocket", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (itemName.Includes("Rocket"))
                     return new List<string> { "ammo", "ammorocket" };
                 return new List<string> { "ammo" };
             }
@@ -452,7 +438,7 @@ namespace MagicSorter.Services
                     {
                         var containerResolved = mappings.ResolveAlias(kvp.Key);
                         if (containerResolved != kvp.Key &&
-                            containerResolved.Equals(category, StringComparison.OrdinalIgnoreCase))
+                            containerResolved.IsEqual(category))
                         {
                             var specificity = GetCategorySpecificity(mappings, category);
                             foreach (var container in kvp.Value)
@@ -534,7 +520,7 @@ namespace MagicSorter.Services
                         {
                             var containerResolved = mappings.ResolveAlias(kvp.Key);
                             if (containerResolved != kvp.Key &&
-                                containerResolved.Equals(fallbackCategory, StringComparison.OrdinalIgnoreCase))
+                                containerResolved.IsEqual(fallbackCategory))
                             {
                                 var specificity = GetCategorySpecificity(mappings, fallbackCategory);
                                 foreach (var container in kvp.Value)

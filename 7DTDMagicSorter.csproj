@@ -72,6 +72,7 @@
         <Compile Include="ConsoleCmdMagicSort.cs"/>
         <Compile Include="ContainerManager.cs"/>
         <Compile Include="ContainerWrapper.cs"/>
+        <Compile Include="Extensions\StringExtensions.cs"/>
         <Compile Include="MagicSorterMod.cs"/>
         <Compile Include="Models\CategoryDefinition.cs"/>
         <Compile Include="Models\MappingData.cs"/>

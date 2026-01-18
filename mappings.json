@@ -85,6 +85,10 @@
       "specificity": 100,
       "description": "Rockets and explosives"
     },
+    "ammocomponents": {
+      "specificity": 90,
+      "description": "Bullet tips, casings, buckshot"
+    },
     "ammoarrow": {
       "specificity": 100,
       "description": "Arrows and bolts"
@@ -208,6 +212,10 @@
     "rawresources": {
       "specificity": 60,
       "description": "Raw materials (stone, iron, etc)"
+    },
+    "ores": {
+      "specificity": 70,
+      "description": "Ores and mining resources"
     },
     "craftedresources": {
       "specificity": 70,
@@ -1590,7 +1598,7 @@
     "gas": "chemicals",
     "leather": "organic",
     "cloth": "organic",
-    "parts": "mechanical",
+    "parts": "vehicleparts",
     "engines": "mechanical",
     "walls": "blocks",
     "floors": "blocks",
@@ -1744,6 +1752,7 @@
     "decorations": "building",
     "craftedresources": "resources",
     "rawresources": "resources",
+    "ores": "rawresources",
     "electrical": "craftedresources",
     "chemicals": "resources",
     "organic": "resources",
@@ -1772,7 +1781,8 @@
     "rawfood": "food",
     "cannedfood": "food",
     "drinks": "food",
-    "farming": "food",
+    "farm": "farming",
+    "farming": "rawresources",
     "medicine": "medical",
     "firstaid": "medical",
     "buffs": "medical",
@@ -1797,6 +1807,7 @@
     "ammoshotgun": "ammo",
     "ammoarrow": "ammo",
     "ammorocket": "ammo",
+    "ammocomponents": "ammo",
     "ammo": "resources",
     "dukes": "treasure",
     "treasuremaps": "treasure",
