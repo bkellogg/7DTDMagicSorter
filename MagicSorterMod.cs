@@ -36,14 +36,11 @@ namespace MagicSorter
         public static CategoryResolver Resolver { get; private set; }
 
         /// <summary>
-        ///     Outputs message to both the console (for multiplayer clients) and the log
+        ///     Outputs message to the console (visible to player in F1 console)
         /// </summary>
         public static void Output(string message)
         {
-            // Output to console (visible to player who ran command in multiplayer)
             SingletonMonoBehaviour<SdtdConsole>.Instance.Output(message);
-            // Also log for server-side debugging
-            Log.Out(message);
         }
 
         public void InitMod(Mod modInstance)

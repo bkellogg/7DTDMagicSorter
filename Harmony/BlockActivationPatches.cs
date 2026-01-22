@@ -133,8 +133,9 @@ namespace MagicSorter.Harmony
         {
             try
             {
-                // Execute via console command to ensure proper multiplayer sync
-                SingletonMonoBehaviour<SdtdConsole>.Instance.ExecuteSync("ms sort", null);
+                var range = MagicSorterMod.Config?.DefaultRange ?? 20;
+                var manager = new ContainerManager(player, range);
+                manager.Sort();
                 GameManager.ShowTooltip(player, "Items sorted!");
             }
             catch (Exception ex)
