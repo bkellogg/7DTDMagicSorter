@@ -7,7 +7,9 @@ A 7 Days to Die mod that automatically sorts items from a designated input conta
 1. Rename storage containers with category labels (e.g., `[ms:Food]`, `[ms:Tools]`)
 2. Rename one container as `[MagicSort]`
 3. Dump loot into the `[MagicSort]` container
-4. Stand near the containers and run `ms sort` in the F1 console
+4. Sort items using one of these methods:
+   - **Radial Menu**: Hold E on the `[MagicSort]` container and select "[MagicSorter] Sort Items"
+   - **Console**: Run `ms sort` in the F1 console
 5. Items move from `[MagicSort]` to appropriate `[ms:X]` containers
 
 ## Installation
@@ -19,22 +21,25 @@ A 7 Days to Die mod that automatically sorts items from a designated input conta
    - `ModInfo.xml`
    - `mappings.json`
    - `Config/MagicSorter.xml`
+   - `Config/Localization.txt`
 
 ## Multiplayer Support
 
 | Mode | Installation | Who Can Use |
 |------|--------------|-------------|
 | Single Player | Install on your game | You |
-| Peer-to-Peer (Host) | Install on host's game | All players |
-| Dedicated Server | Install on server | All players |
+| Peer-to-Peer (Host) | Host only | All players (console), Host only (radial menu) |
+| Peer-to-Peer (All) | All players | All players (both methods) |
+| Dedicated Server | Server only | All players (console only) |
+| Dedicated Server | Server + clients | All players (both methods) |
 
 **How it works:**
-- The mod only needs to be installed on the **server** (or host in peer-to-peer)
-- All connected players can use the `ms` commands
-- Each player's commands operate on containers near **their** position
+- **Console commands** (`ms sort`, etc.) are processed server-side
+- **Radial menu button** executes via console command for proper multiplayer sync, but requires the mod on each client to display the button
+- Each player's sorting operates on containers near **their** position
 - Players can sort items independently without affecting each other
 
-**Note:** Clients do NOT need to install the mod - the server handles everything.
+**Recommendation:** For the best experience (radial menu + console), install the mod on both server and all clients.
 
 ## Console Commands
 
@@ -456,6 +461,10 @@ Defines categories, item mappings, aliases, and fallbacks. Can be customized.
 </MagicSorterConfig>
 ```
 
+## Dependencies
+
+- **0_TFP_Harmony** - Included with the base game in the Mods folder. Required for the radial menu integration.
+
 ## Building from Source
 
 Requires JetBrains Rider or Visual Studio with .NET Framework 4.8.
@@ -481,8 +490,11 @@ Services/
   CategoryResolver.cs          - Specificity-based category matching
   MappingLoader.cs             - Load mappings from JSON (uses Newtonsoft.Json)
   ConfigurationLoader.cs       - XML config loader
+Harmony/
+  BlockActivationPatches.cs    - Adds "Sort Items" to container radial menu
 Config/
   MagicSorter.xml              - Default configuration
+  Localization.txt             - UI text translations
 mappings.json                  - Category definitions and mappings
 ```
 

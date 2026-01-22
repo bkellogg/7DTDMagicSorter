@@ -1,4 +1,7 @@
+using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+using HarmonyLib;
 using MagicSorter.Models;
 using MagicSorter.Services;
 
@@ -60,7 +63,32 @@ namespace MagicSorter
             // Load mappings from local file
             MappingLoader.Initialize();
 
+            // Apply Harmony patches
+            ApplyHarmonyPatches();
+
             Log.Out("[MagicSorter] Mod loaded successfully.");
+        }
+
+        private void ApplyHarmonyPatches()
+        {
+            try
+            {
+                var harmony = new HarmonyLib.Harmony("com.magicsorter.patches");
+                harmony.PatchAll(Assembly.GetExecutingAssembly());
+
+                // Log what was patched
+                var patchedMethods = harmony.GetPatchedMethods();
+                foreach (var method in patchedMethods)
+                {
+                    Log.Out($"[MagicSorter] Patched: {method.DeclaringType?.Name}.{method.Name}");
+                }
+
+                Log.Out("[MagicSorter] Harmony patches applied successfully.");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[MagicSorter] Failed to apply Harmony patches: {ex.Message}");
+            }
         }
     }
 }
