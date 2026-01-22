@@ -52,6 +52,12 @@ namespace MagicSorter.Models
             = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
+        ///     Pattern rules for matching item names to categories
+        ///     Patterns are evaluated in priority order (highest first)
+        /// </summary>
+        public List<PatternRule> Patterns { get; set; } = new List<PatternRule>();
+
+        /// <summary>
         ///     Gets the specificity for a category, returning default if not found
         /// </summary>
         public int GetSpecificity(string category)

@@ -1,5 +1,258 @@
 {
-  "version": "1.0.0",
+  "version": "2.0.0",
+  "patterns": [
+    { "type": "Prefix", "match": "schematic", "categories": ["books", "schematics"], "priority": 1000 },
+    { "type": "Contains", "match": "Schematic", "categories": ["books", "schematics"], "priority": 1000 },
+
+    { "type": "Contains", "match": "MechanicalParts", "categories": ["resources", "mechanical"], "priority": 950 },
+    { "type": "Contains", "match": "Mechanical_Parts", "categories": ["resources", "mechanical"], "priority": 950 },
+    { "type": "Contains", "match": "ElectricParts", "categories": ["resources", "electrical"], "priority": 950 },
+    { "type": "Contains", "match": "Electric_Parts", "categories": ["resources", "electrical"], "priority": 950 },
+    { "type": "Contains", "match": "ElectricalParts", "categories": ["resources", "electrical"], "priority": 950 },
+
+    { "type": "Prefix", "match": "gun", "alsoMatch": "Parts", "alsoMatchType": "Contains", "categories": ["resources", "mechanical"], "priority": 940 },
+    { "type": "Prefix", "match": "melee", "alsoMatch": "Parts", "alsoMatchType": "Contains", "categories": ["resources", "mechanical"], "priority": 940 },
+
+    { "type": "Prefix", "match": "gunBot", "categories": ["weapons", "turrets"], "priority": 900 },
+
+    { "type": "Contains", "match": "SMG", "categories": ["weapons", "ranged", "smgs"], "priority": 895 },
+
+    { "type": "Prefix", "match": "gunHandgun", "categories": ["weapons", "ranged", "pistols"], "priority": 890 },
+    { "type": "Prefix", "match": "gunShotgun", "categories": ["weapons", "ranged", "shotguns"], "priority": 890 },
+
+    { "type": "Prefix", "match": "gunRifle", "categories": ["weapons", "ranged", "rifles"], "priority": 885 },
+    { "type": "Prefix", "match": "gunTactical", "categories": ["weapons", "ranged", "rifles"], "priority": 885 },
+    { "type": "Contains", "match": "AssaultRifle", "categories": ["weapons", "ranged", "rifles"], "priority": 885 },
+    { "type": "Contains", "match": "SniperRifle", "categories": ["weapons", "ranged", "rifles"], "priority": 885 },
+    { "type": "Contains", "match": "HuntingRifle", "categories": ["weapons", "ranged", "rifles"], "priority": 885 },
+    { "type": "Contains", "match": "LeverAction", "categories": ["weapons", "ranged", "rifles"], "priority": 885 },
+
+    { "type": "Contains", "match": "TacticalAR", "categories": ["weapons", "ranged", "rifles"], "priority": 882 },
+    { "type": "Contains", "match": "AK47", "categories": ["weapons", "ranged", "rifles"], "priority": 882 },
+
+    { "type": "Prefix", "match": "gunMG", "categories": ["weapons", "ranged", "machineguns"], "priority": 880 },
+
+    { "type": "Prefix", "match": "gunBow", "categories": ["weapons", "ranged", "bows"], "priority": 875 },
+    { "type": "Prefix", "match": "gunCrossbow", "categories": ["weapons", "ranged", "bows"], "priority": 875 },
+
+    { "type": "Prefix", "match": "gunExplosives", "categories": ["weapons", "ranged", "explosives"], "priority": 870 },
+    { "type": "Prefix", "match": "gunRocketLauncher", "categories": ["weapons", "ranged", "explosives"], "priority": 870 },
+
+    { "type": "Prefix", "match": "meleeWpnBlade", "categories": ["weapons", "melee", "blades"], "priority": 860 },
+
+    { "type": "Prefix", "match": "meleeWpnClub", "categories": ["weapons", "melee", "clubs"], "priority": 855 },
+    { "type": "Contains", "match": "PipeBaton", "categories": ["weapons", "melee", "clubs"], "priority": 855 },
+    { "type": "Contains", "match": "BaseballBat", "categories": ["weapons", "melee", "clubs"], "priority": 855 },
+
+    { "type": "Prefix", "match": "meleeWpnSpear", "categories": ["weapons", "melee", "spears"], "priority": 850 },
+    { "type": "Prefix", "match": "meleeWpnSledge", "categories": ["weapons", "melee", "sledges"], "priority": 850 },
+    { "type": "Prefix", "match": "meleeWpnKnuckles", "categories": ["weapons", "melee", "knuckles"], "priority": 850 },
+
+    { "type": "Prefix", "match": "meleeWpn", "categories": ["weapons", "melee"], "priority": 840 },
+    { "type": "Prefix", "match": "melee", "exclude": "meleeTool", "excludeType": "Prefix", "categories": ["weapons", "melee"], "priority": 835 },
+
+    { "type": "Prefix", "match": "meleeToolTorch", "categories": ["building", "lighting"], "priority": 830 },
+    { "type": "Prefix", "match": "meleeToolPick", "categories": ["tools", "miningtools"], "priority": 825 },
+    { "type": "Prefix", "match": "meleeToolAxe", "categories": ["tools", "harvestingtools"], "priority": 820 },
+    { "type": "Prefix", "match": "meleeToolShovel", "categories": ["tools", "harvestingtools"], "priority": 820 },
+    { "type": "Prefix", "match": "meleeToolRepair", "categories": ["tools", "repairtools"], "priority": 815 },
+    { "type": "Prefix", "match": "meleeToolSalvage", "categories": ["tools", "repairtools"], "priority": 815 },
+
+    { "type": "Prefix", "match": "toolForge", "categories": ["building", "workstations"], "priority": 810 },
+    { "type": "Prefix", "match": "tool", "categories": ["tools"], "priority": 805 },
+
+    { "type": "Contains", "match": "BulletTip", "categories": ["ammo", "ammocomponents"], "priority": 800 },
+    { "type": "Contains", "match": "BulletCasing", "categories": ["ammo", "ammocomponents"], "priority": 800 },
+    { "type": "Contains", "match": "Buckshot", "categories": ["ammo", "ammocomponents"], "priority": 800 },
+    { "type": "Contains", "match": "GunPowder", "categories": ["ammo", "ammocomponents"], "priority": 800 },
+
+    { "type": "Prefix", "match": "ammoGasCan", "categories": ["resources", "chemicals"], "priority": 795 },
+
+    { "type": "Prefix", "match": "ammo9mm", "categories": ["ammo", "ammo9mm"], "priority": 790 },
+    { "type": "Prefix", "match": "ammo44Magnum", "categories": ["ammo", "ammo44"], "priority": 790 },
+    { "type": "Prefix", "match": "ammo762mm", "categories": ["ammo", "ammo762"], "priority": 790 },
+    { "type": "Prefix", "match": "ammoShotgun", "categories": ["ammo", "ammoshotgun"], "priority": 790 },
+    { "type": "Prefix", "match": "ammoArrow", "categories": ["ammo", "ammoarrow"], "priority": 790 },
+    { "type": "Prefix", "match": "ammoCrossbow", "categories": ["ammo", "ammoarrow"], "priority": 790 },
+    { "type": "Prefix", "match": "ammoRocket", "categories": ["ammo", "ammorocket"], "priority": 790 },
+
+    { "type": "Prefix", "match": "ammo", "categories": ["ammo"], "priority": 780 },
+
+    { "type": "Prefix", "match": "thrownDynamite", "categories": ["weapons", "explosives"], "priority": 770 },
+    { "type": "Prefix", "match": "thrownPipe", "categories": ["weapons", "explosives"], "priority": 770 },
+    { "type": "Prefix", "match": "thrownGrenade", "categories": ["weapons", "explosives"], "priority": 770 },
+    { "type": "Prefix", "match": "thrownFrag", "categories": ["weapons", "explosives"], "priority": 770 },
+    { "type": "Prefix", "match": "thrownMolotov", "categories": ["weapons", "explosives"], "priority": 770 },
+
+    { "type": "Prefix", "match": "armor", "alsoMatch": "Helmet", "alsoMatchType": "Contains", "categories": ["armor", "armorhead"], "priority": 765 },
+    { "type": "Prefix", "match": "armor", "alsoMatch": "Head", "alsoMatchType": "Contains", "categories": ["armor", "armorhead"], "priority": 765 },
+    { "type": "Prefix", "match": "armor", "alsoMatch": "Chest", "alsoMatchType": "Contains", "categories": ["armor", "armorchest"], "priority": 765 },
+    { "type": "Prefix", "match": "armor", "alsoMatch": "Legs", "alsoMatchType": "Contains", "categories": ["armor", "armorlegs"], "priority": 765 },
+    { "type": "Prefix", "match": "armor", "alsoMatch": "Boots", "alsoMatchType": "Contains", "categories": ["armor", "armorboots"], "priority": 765 },
+    { "type": "Prefix", "match": "armor", "alsoMatch": "Feet", "alsoMatchType": "Contains", "categories": ["armor", "armorboots"], "priority": 765 },
+    { "type": "Prefix", "match": "armor", "alsoMatch": "Gloves", "alsoMatchType": "Contains", "categories": ["armor", "armorgloves"], "priority": 765 },
+    { "type": "Prefix", "match": "armor", "alsoMatch": "Hands", "alsoMatchType": "Contains", "categories": ["armor", "armorgloves"], "priority": 765 },
+    { "type": "Prefix", "match": "armor", "categories": ["armor"], "priority": 760 },
+
+    { "type": "Prefix", "match": "resourceForged", "categories": ["resources", "craftedresources"], "priority": 750 },
+    { "type": "Prefix", "match": "resourceScrap", "categories": ["resources", "rawresources"], "priority": 750 },
+
+    { "type": "Contains", "match": "rottingFlesh", "categories": ["food", "farming"], "priority": 745 },
+    { "type": "Contains", "match": "rottenFlesh", "categories": ["food", "farming"], "priority": 745 },
+
+    { "type": "Contains", "match": "AnimalFat", "categories": ["food", "resources", "rawresources"], "priority": 740 },
+
+    { "type": "Contains", "match": "Bone", "categories": ["resources", "organic"], "priority": 735 },
+    { "type": "Contains", "match": "Feather", "categories": ["resources", "organic"], "priority": 735 },
+    { "type": "Contains", "match": "AnimalHide", "categories": ["resources", "organic"], "priority": 735 },
+    { "type": "Contains", "match": "Leather", "categories": ["resources", "organic"], "priority": 735 },
+
+    { "type": "Contains", "match": "Ore", "categories": ["resources", "ores"], "priority": 730 },
+    { "type": "Contains", "match": "OreDeposit", "categories": ["resources", "ores"], "priority": 730 },
+    { "type": "Contains", "match": "OilShale", "categories": ["resources", "ores"], "priority": 730 },
+    { "type": "Contains", "match": "Nitrate", "categories": ["resources", "ores"], "priority": 730 },
+    { "type": "Contains", "match": "Coal", "categories": ["resources", "ores"], "priority": 730 },
+
+    { "type": "Contains", "match": "Honey", "categories": ["food"], "priority": 725 },
+
+    { "type": "Prefix", "match": "resource", "categories": ["resources"], "priority": 720 },
+
+    { "type": "Prefix", "match": "drink", "categories": ["food", "drinks"], "priority": 710 },
+    { "type": "Prefix", "match": "foodCan", "categories": ["food", "cannedfood"], "priority": 705 },
+    { "type": "Prefix", "match": "foodRaw", "categories": ["food", "rawfood"], "priority": 700 },
+    { "type": "Prefix", "match": "foodCrop", "categories": ["food", "rawfood"], "priority": 700 },
+    { "type": "Prefix", "match": "food", "categories": ["food", "cookedfood"], "priority": 695 },
+
+    { "type": "Prefix", "match": "drugVitamin", "categories": ["medical", "buffs"], "priority": 690 },
+    { "type": "Prefix", "match": "drugSteroid", "categories": ["medical", "buffs"], "priority": 690 },
+    { "type": "Prefix", "match": "drugRecog", "categories": ["medical", "buffs"], "priority": 690 },
+    { "type": "Prefix", "match": "drugFort", "categories": ["medical", "buffs"], "priority": 690 },
+    { "type": "Prefix", "match": "drug", "categories": ["medical", "medicine"], "priority": 685 },
+    { "type": "Prefix", "match": "medicalFirstAid", "categories": ["medical", "firstaid"], "priority": 680 },
+    { "type": "Prefix", "match": "medicalBandage", "categories": ["medical", "firstaid"], "priority": 680 },
+    { "type": "Prefix", "match": "medical", "exclude": "journal", "excludeType": "Contains", "categories": ["medical"], "priority": 675 },
+
+    { "type": "Prefix", "match": "modGun", "categories": ["mods", "weaponmods"], "priority": 670 },
+    { "type": "Prefix", "match": "modArmor", "categories": ["mods", "armormods"], "priority": 670 },
+    { "type": "Prefix", "match": "mod", "categories": ["mods"], "priority": 665 },
+
+    { "type": "Prefix", "match": "vehicle", "exclude": "book", "excludeType": "Contains", "categories": ["vehicles", "vehicleparts"], "priority": 660 },
+
+    { "type": "Prefix", "match": "book", "categories": ["books", "skillbooks"], "priority": 655 },
+    { "type": "Prefix", "match": "perkBook", "categories": ["books", "skillbooks"], "priority": 655 },
+    { "type": "Contains", "match": "magazine", "categories": ["books", "skillbooks"], "priority": 665 },
+    { "type": "Contains", "match": "journal", "categories": ["books", "skillbooks"], "priority": 665 },
+
+    { "type": "Prefix", "match": "planted", "categories": ["food", "farming"], "priority": 650 },
+    { "type": "Prefix", "match": "seed", "categories": ["food", "farming"], "priority": 650 },
+    { "type": "Prefix", "match": "tree", "categories": ["food", "farming"], "priority": 650 },
+    { "type": "Contains", "match": "Seed", "categories": ["food", "farming"], "priority": 650 },
+    { "type": "Contains", "match": "Plantable", "categories": ["food", "farming"], "priority": 650 },
+
+    { "type": "Contains", "match": "Torch", "exclude": "flashlight", "excludeType": "Prefix", "categories": ["building", "lighting"], "priority": 645 },
+    { "type": "Contains", "match": "Candle", "exclude": "mod", "excludeType": "Prefix", "categories": ["building", "lighting"], "priority": 645 },
+    { "type": "Contains", "match": "Lantern", "exclude": "mod", "excludeType": "Prefix", "categories": ["building", "lighting"], "priority": 645 },
+    { "type": "Prefix", "match": "light", "categories": ["building", "lighting"], "priority": 645 },
+    { "type": "Contains", "match": "ceilingLight", "categories": ["building", "lighting"], "priority": 645 },
+    { "type": "Contains", "match": "wallLight", "categories": ["building", "lighting"], "priority": 645 },
+    { "type": "Contains", "match": "floorLight", "categories": ["building", "lighting"], "priority": 645 },
+    { "type": "Contains", "match": "Fluorescent", "categories": ["building", "lighting"], "priority": 645 },
+
+    { "type": "Prefix", "match": "crucible", "categories": ["building", "workstations"], "priority": 640 },
+    { "type": "Prefix", "match": "forge", "categories": ["building", "workstations"], "priority": 640 },
+    { "type": "Prefix", "match": "workbench", "categories": ["building", "workstations"], "priority": 640 },
+    { "type": "Prefix", "match": "campfire", "categories": ["building", "workstations"], "priority": 640 },
+    { "type": "Prefix", "match": "chemistryStation", "categories": ["building", "workstations"], "priority": 640 },
+    { "type": "Prefix", "match": "cementMixer", "categories": ["building", "workstations"], "priority": 640 },
+
+    { "type": "Prefix", "match": "carBattery", "categories": ["resources", "electrical"], "priority": 635 },
+    { "type": "Prefix", "match": "battery", "categories": ["resources", "electrical"], "priority": 635 },
+    { "type": "Contains", "match": "Battery", "categories": ["resources", "electrical"], "priority": 635 },
+    { "type": "Prefix", "match": "generator", "categories": ["resources", "electrical"], "priority": 635 },
+    { "type": "Prefix", "match": "solar", "categories": ["resources", "electrical"], "priority": 635 },
+    { "type": "Contains", "match": "relay", "categories": ["resources", "electrical"], "priority": 635 },
+    { "type": "Prefix", "match": "electric", "exclude": "electricfence", "excludeType": "Prefix", "categories": ["resources", "electrical"], "priority": 635 },
+    { "type": "Equals", "match": "switch", "categories": ["resources", "electrical"], "priority": 635 },
+
+    { "type": "Prefix", "match": "engine", "categories": ["resources", "mechanical"], "priority": 630 },
+    { "type": "Prefix", "match": "smallEngine", "categories": ["resources", "mechanical"], "priority": 630 },
+
+    { "type": "Prefix", "match": "cookingPot", "categories": ["tools"], "priority": 625 },
+    { "type": "Prefix", "match": "cookingGrill", "categories": ["tools"], "priority": 625 },
+    { "type": "Prefix", "match": "beaker", "categories": ["tools"], "priority": 625 },
+
+    { "type": "Prefix", "match": "paint", "categories": ["resources"], "priority": 620 },
+    { "type": "Prefix", "match": "dyePowder", "categories": ["resources"], "priority": 620 },
+
+    { "type": "Prefix", "match": "stone", "categories": ["resources", "rawresources"], "priority": 615 },
+    { "type": "Prefix", "match": "smallStone", "categories": ["resources", "rawresources"], "priority": 615 },
+    { "type": "Prefix", "match": "cobblestone", "categories": ["resources", "rawresources"], "priority": 615 },
+
+    { "type": "Contains", "match": "oldCash", "categories": ["treasure", "dukes"], "priority": 610 },
+    { "type": "Contains", "match": "casinoCoin", "categories": ["treasure", "dukes"], "priority": 610 },
+    { "type": "Contains", "match": "casinoToken", "categories": ["treasure", "dukes"], "priority": 610 },
+
+    { "type": "Contains", "match": "TreasureMap", "categories": ["treasure", "treasuremaps"], "priority": 605 },
+    { "type": "Contains", "match": "treasureQuest", "categories": ["treasure", "treasuremaps"], "priority": 605 },
+    { "type": "Contains", "match": "BuriedSupplies", "categories": ["treasure", "treasuremaps"], "priority": 605 },
+
+    { "type": "Prefix", "match": "flashlight", "categories": ["tools", "lighting"], "priority": 600 },
+    { "type": "Prefix", "match": "meleeToolFlashlight", "categories": ["tools", "lighting"], "priority": 600 },
+
+    { "type": "Prefix", "match": "wireTool", "categories": ["tools", "electrical"], "priority": 595 },
+    { "type": "Prefix", "match": "toolWire", "categories": ["tools", "electrical"], "priority": 595 },
+
+    { "type": "Contains", "match": "Hatch", "categories": ["building", "doors"], "priority": 590 },
+    { "type": "Contains", "match": "Door", "categories": ["building", "doors"], "priority": 590 },
+    { "type": "Contains", "match": "Gate", "categories": ["building", "doors"], "priority": 590 },
+
+    { "type": "Contains", "match": "Trap", "categories": ["building", "traps"], "priority": 585 },
+    { "type": "Contains", "match": "turret", "categories": ["building", "traps"], "priority": 585 },
+    { "type": "Prefix", "match": "electricfence", "categories": ["building", "traps"], "priority": 585 },
+    { "type": "Contains", "match": "TriggerPlate", "categories": ["building", "traps"], "priority": 585 },
+    { "type": "Contains", "match": "motionSensor", "categories": ["building", "traps"], "priority": 585 },
+    { "type": "Contains", "match": "barbedWire", "categories": ["building", "traps"], "priority": 585 },
+    { "type": "Contains", "match": "spikes", "categories": ["building", "traps"], "priority": 585 },
+
+    { "type": "Equals", "match": "vehicleMinibike", "categories": ["vehicles"], "priority": 580 },
+    { "type": "Equals", "match": "vehicleMotorcycle", "categories": ["vehicles"], "priority": 580 },
+    { "type": "Equals", "match": "vehicle4x4Truck", "categories": ["vehicles"], "priority": 580 },
+    { "type": "Equals", "match": "vehicleGyrocopter", "categories": ["vehicles"], "priority": 580 },
+    { "type": "Equals", "match": "vehicleBicycle", "categories": ["vehicles"], "priority": 580 },
+    { "type": "Prefix", "match": "vehiclePlaceable", "categories": ["vehicles"], "priority": 580 },
+
+    { "type": "Contains", "match": "Wheel", "categories": ["vehicles", "vehicleparts"], "priority": 575 },
+    { "type": "Contains", "match": "vehiclePart", "categories": ["vehicles", "vehicleparts"], "priority": 575 },
+    { "type": "Prefix", "match": "vehicleHandle", "categories": ["vehicles", "vehicleparts"], "priority": 575 },
+    { "type": "Prefix", "match": "vehicleChassis", "categories": ["vehicles", "vehicleparts"], "priority": 575 },
+
+    { "type": "Prefix", "match": "questReward", "alsoMatch": "Handgun", "alsoMatchType": "Contains", "categories": ["weapons", "ranged", "pistols"], "priority": 570 },
+    { "type": "Prefix", "match": "questReward", "alsoMatch": "Pistol", "alsoMatchType": "Contains", "categories": ["weapons", "ranged", "pistols"], "priority": 570 },
+    { "type": "Prefix", "match": "questReward", "alsoMatch": "Rifle", "alsoMatchType": "Contains", "categories": ["weapons", "ranged", "rifles"], "priority": 570 },
+    { "type": "Prefix", "match": "questReward", "alsoMatch": "AK", "alsoMatchType": "Contains", "categories": ["weapons", "ranged", "rifles"], "priority": 570 },
+    { "type": "Prefix", "match": "questReward", "alsoMatch": "Shotgun", "alsoMatchType": "Contains", "categories": ["weapons", "ranged", "shotguns"], "priority": 570 },
+    { "type": "Prefix", "match": "questReward", "alsoMatch": "SMG", "alsoMatchType": "Contains", "categories": ["weapons", "ranged", "smgs"], "priority": 570 },
+    { "type": "Prefix", "match": "questReward", "alsoMatch": "MachineGun", "alsoMatchType": "Contains", "categories": ["weapons", "ranged", "smgs"], "priority": 570 },
+    { "type": "Prefix", "match": "questReward", "alsoMatch": "Bow", "alsoMatchType": "Contains", "categories": ["weapons", "ranged", "bows"], "priority": 570 },
+    { "type": "Prefix", "match": "questReward", "alsoMatch": "Crossbow", "alsoMatchType": "Contains", "categories": ["weapons", "ranged", "bows"], "priority": 570 },
+    { "type": "Prefix", "match": "questReward", "alsoMatch": "Blade", "alsoMatchType": "Contains", "categories": ["weapons", "melee", "blades"], "priority": 570 },
+    { "type": "Prefix", "match": "questReward", "alsoMatch": "Knife", "alsoMatchType": "Contains", "categories": ["weapons", "melee", "blades"], "priority": 570 },
+    { "type": "Prefix", "match": "questReward", "alsoMatch": "Machete", "alsoMatchType": "Contains", "categories": ["weapons", "melee", "blades"], "priority": 570 },
+    { "type": "Prefix", "match": "questReward", "alsoMatch": "Club", "alsoMatchType": "Contains", "categories": ["weapons", "melee", "clubs"], "priority": 570 },
+    { "type": "Prefix", "match": "questReward", "alsoMatch": "Bat", "alsoMatchType": "Contains", "categories": ["weapons", "melee", "clubs"], "priority": 570 },
+    { "type": "Prefix", "match": "questReward", "alsoMatch": "Sledge", "alsoMatchType": "Contains", "categories": ["weapons", "melee", "sledges"], "priority": 570 },
+    { "type": "Prefix", "match": "questReward", "categories": ["weapons"], "priority": 565 },
+
+    { "type": "Prefix", "match": "ammoBundle", "alsoMatch": "9mm", "alsoMatchType": "Contains", "categories": ["ammo", "ammo9mm"], "priority": 560 },
+    { "type": "Prefix", "match": "ammoBundle", "alsoMatch": "44", "alsoMatchType": "Contains", "categories": ["ammo", "ammo44"], "priority": 560 },
+    { "type": "Prefix", "match": "ammoBundle", "alsoMatch": "Magnum", "alsoMatchType": "Contains", "categories": ["ammo", "ammo44"], "priority": 560 },
+    { "type": "Prefix", "match": "ammoBundle", "alsoMatch": "762", "alsoMatchType": "Contains", "categories": ["ammo", "ammo762"], "priority": 560 },
+    { "type": "Prefix", "match": "ammoBundle", "alsoMatch": "Shotgun", "alsoMatchType": "Contains", "categories": ["ammo", "ammoshotgun"], "priority": 560 },
+    { "type": "Prefix", "match": "ammoBundle", "alsoMatch": "Arrow", "alsoMatchType": "Contains", "categories": ["ammo", "ammoarrow"], "priority": 560 },
+    { "type": "Prefix", "match": "ammoBundle", "alsoMatch": "Bolt", "alsoMatchType": "Contains", "categories": ["ammo", "ammoarrow"], "priority": 560 },
+    { "type": "Prefix", "match": "ammoBundle", "alsoMatch": "Rocket", "alsoMatchType": "Contains", "categories": ["ammo", "ammorocket"], "priority": 560 },
+    { "type": "Prefix", "match": "ammoBundle", "categories": ["ammo"], "priority": 555 }
+  ],
   "categories": {
     "weapons": {
       "specificity": 50,
