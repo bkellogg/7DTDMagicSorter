@@ -13,7 +13,7 @@ namespace MagicSorter
     [SuppressMessage("ReSharper", "ClassNeverInstantiated.Global")]
     public class MagicSorterMod : IModApi
     {
-        public const string Version = "0.0.2";
+        public const string Version = "0.3.0";
 
         /// <summary>
         ///     Path to the mod folder
