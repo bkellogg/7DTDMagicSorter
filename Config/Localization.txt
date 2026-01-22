@@ -1,0 +1,2 @@
+Key,File,Type,UsedInMainMenu,NoTranslate,english,Context / Meaning,german,french,italian,japanese,koreana,latam,polish,brazilian,russian,schinese,spanish,tchinese,turkish,Comment
+blockcommand_magicsort,blocks,,,false,Sort Items,,Sortieren,Trier,,,,,,,,,,,,MagicSorter sort command

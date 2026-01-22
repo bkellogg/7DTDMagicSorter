@@ -4,5 +4,5 @@
     <DisplayName value="Magic Sorter" />
     <Description value="Automatically sort items from a designated container into categorized storage boxes" />
     <Author value="brend" />
-    <Version value="0.1.0" />
+    <Version value="0.2.0" />
 </ModInfo>
