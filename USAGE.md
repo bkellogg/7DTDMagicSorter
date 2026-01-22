@@ -25,7 +25,14 @@ Create destination containers with labels like:
 [ms:Resources]
 ```
 
-## Commands
+## Sorting Items
+
+### Radial Menu (Recommended)
+1. Look at your `[MagicSort]` container
+2. Hold **E** to open the radial menu
+3. Select **Sort Items**
+
+### Console Commands
 Open the F1 console and type:
 
 | Command | Description |
@@ -146,6 +153,12 @@ Junk (scrap items)
 Unknown (fallback for uncategorized items)
 ```
 Aliases: `Money` → Dukes, `Coins` → Dukes, `Trash` → Junk
+
+## Multiplayer
+
+- **Console commands** work with server-only installation
+- **Radial menu button** requires the mod on each client to display
+- For best experience, install on both server and all clients
 
 ## Tips
 
