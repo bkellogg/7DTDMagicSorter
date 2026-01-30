@@ -56,6 +56,43 @@ After editing, the user should run `ms reload` in the game's F1 console to apply
 
 ---
 
+## Important Concepts
+
+### Case Sensitivity
+
+- **Pattern matching is case-sensitive** - `"Contains": "Chip"` will NOT match `foodPotatochips` (lowercase 'c')
+- **Category names should be lowercase** - Use `snacks` not `Snacks`
+- **Aliases should be lowercase** - Use `junkfood` not `JunkFood`
+- **Item names preserve game casing** - Match exactly what `ms scan` shows (e.g., `foodBaconAndEggs`)
+
+### Why Multiple Categories in Arrays?
+
+When a pattern lists `["food", "cannedfood"]`, the item belongs to BOTH categories. This serves two purposes:
+
+1. **Container matching** - The item can go to either `[ms:food]` OR `[ms:cannedfood]` containers. The most specific matching container wins.
+2. **Fallback chain** - If no `[ms:cannedfood]` exists, the item falls back to `[ms:food]`.
+
+Always list from broadest to most specific: `["weapons", "ranged", "pistols"]`
+
+### What Happens to Unmatched Items?
+
+Items that don't match ANY pattern or direct mapping:
+- Stay in the input container
+- Are reported as "uncategorized" in `ms plan` output
+
+This is why fallback chains matter - you want items to land somewhere rather than being stuck.
+
+### Display Names vs Internal Names
+
+Users see "Bacon and Eggs" in-game, but the internal name is `foodBaconAndEggs`. Patterns match against **internal names only**.
+
+If the user doesn't know internal names:
+- Ask them to run `ms scan` in-game with items in a container
+- Guess based on common patterns (food items start with `food`, weapons with `gun` or `melee`, etc.)
+- The Item Name Reference section below shows common prefixes
+
+---
+
 ## JSON Structure Overview
 
 ```json
@@ -113,6 +150,16 @@ An array of rules that match item names to categories. Patterns are evaluated in
 | 700-800 | Standard categories (food types, resources) |
 | 600-700 | Custom user categories |
 | 500-600 | Fallback/general patterns |
+
+### Where to Insert New Patterns
+
+**Position in the array doesn't matter** - priority determines evaluation order, not array position.
+
+For readability, add new patterns:
+- Near similar patterns (group food patterns together, weapon patterns together, etc.)
+- Or at the end of the array, before the closing `]`
+
+Either works functionally.
 
 ### Examples
 
@@ -343,6 +390,138 @@ Item names in 7 Days to Die follow patterns:
 | `vehicle` | Vehicles/parts | `vehicleMinibike`, `vehiclePartWheel` |
 
 Users can run `ms scan` in-game to see actual item names in their containers.
+
+---
+
+## Existing Categories Reference
+
+These categories already exist in the default mappings. Use these names exactly (lowercase):
+
+### Weapons & Combat
+| Category | Description |
+|----------|-------------|
+| `weapons` | All weapons (broad) |
+| `ranged` | Ranged weapons |
+| `melee` | Melee weapons |
+| `pistols` | Handguns and revolvers |
+| `rifles` | Rifles (hunting, sniper, tactical) |
+| `shotguns` | Shotguns |
+| `smgs` | Submachine guns |
+| `machineguns` | Machine guns |
+| `bows` | Bows and crossbows |
+| `explosives` | Explosive weapons |
+| `blades` | Bladed melee weapons |
+| `clubs` | Club-type melee weapons |
+| `spears` | Spears |
+| `sledges` | Sledgehammers |
+| `knuckles` | Knuckle weapons |
+| `turrets` | Turret weapons |
+
+### Ammunition
+| Category | Description |
+|----------|-------------|
+| `ammo` | All ammunition (broad) |
+| `ammo9mm` | 9mm ammunition |
+| `ammo44` | .44 Magnum ammunition |
+| `ammo762` | 7.62mm ammunition |
+| `ammoshotgun` | Shotgun shells |
+| `ammoarrow` | Arrows and bolts |
+| `ammorocket` | Rockets |
+| `ammocomponents` | Bullet tips, casings, etc. |
+
+### Food & Drinks
+| Category | Description |
+|----------|-------------|
+| `food` | All food (broad) |
+| `cookedfood` | Cooked/prepared food |
+| `rawfood` | Raw food ingredients |
+| `cannedfood` | Canned food |
+| `drinks` | Beverages |
+| `farming` | Seeds and farming items |
+
+### Medical
+| Category | Description |
+|----------|-------------|
+| `medical` | All medical items (broad) |
+| `firstaid` | Bandages and first aid kits |
+| `medicine` | Medicine and drugs |
+| `buffs` | Buff items (vitamins, steroids) |
+
+### Resources
+| Category | Description |
+|----------|-------------|
+| `resources` | All resources (broad) |
+| `rawresources` | Raw materials (stone, iron, wood) |
+| `craftedresources` | Crafted materials (forged iron) |
+| `ores` | Ores and mining resources |
+| `electrical` | Electrical components |
+| `mechanical` | Mechanical parts |
+| `chemicals` | Chemical resources |
+| `organic` | Organic materials (leather, cloth) |
+
+### Tools
+| Category | Description |
+|----------|-------------|
+| `tools` | All tools (broad) |
+| `miningtools` | Pickaxes, augers |
+| `harvestingtools` | Axes, shovels |
+| `repairtools` | Wrenches, repair tools |
+| `constructiontools` | Nailguns, construction |
+
+### Armor & Clothing
+| Category | Description |
+|----------|-------------|
+| `armor` | All armor (broad) |
+| `armorhead` | Helmets |
+| `armorchest` | Chest armor |
+| `armorlegs` | Leg armor |
+| `armorboots` | Boot armor |
+| `armorgloves` | Glove armor |
+| `clothing` | All clothing (broad) |
+
+### Building
+| Category | Description |
+|----------|-------------|
+| `building` | All building materials (broad) |
+| `blocks` | Building blocks |
+| `doors` | Doors and hatches |
+| `traps` | Traps and defenses |
+| `lighting` | Lights and torches |
+| `storage` | Storage containers |
+| `workstations` | Crafting stations |
+| `furniture` | Furniture items |
+| `decorations` | Decorative items |
+
+### Vehicles
+| Category | Description |
+|----------|-------------|
+| `vehicles` | All vehicle items (broad) |
+| `vehicleparts` | Vehicle parts |
+| `vehiclemods` | Vehicle modifications |
+
+### Mods
+| Category | Description |
+|----------|-------------|
+| `mods` | All weapon/armor mods (broad) |
+| `weaponmods` | Weapon modifications |
+| `armormods` | Armor modifications |
+
+### Books & Learning
+| Category | Description |
+|----------|-------------|
+| `books` | All books (broad) |
+| `schematics` | Crafting schematics |
+| `skillbooks` | Skill magazines |
+
+### Other
+| Category | Description |
+|----------|-------------|
+| `treasure` | Valuables and treasure |
+| `treasuremaps` | Treasure maps |
+| `dukes` | Duke's Casino Tokens |
+| `misc` | Miscellaneous items |
+| `junk` | Junk/scrap items |
+| `unknown` | Uncategorized items |
 
 ---
 
