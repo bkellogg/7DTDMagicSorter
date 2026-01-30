@@ -393,135 +393,18 @@ Users can run `ms scan` in-game to see actual item names in their containers.
 
 ---
 
-## Existing Categories Reference
+## Discovering Existing Categories
 
-These categories already exist in the default mappings. Use these names exactly (lowercase):
+**Always read the user's actual `mappings.json` file** to see what categories, patterns, and aliases currently exist. Don't assume - the user may have customized it.
 
-### Weapons & Combat
-| Category | Description |
-|----------|-------------|
-| `weapons` | All weapons (broad) |
-| `ranged` | Ranged weapons |
-| `melee` | Melee weapons |
-| `pistols` | Handguns and revolvers |
-| `rifles` | Rifles (hunting, sniper, tactical) |
-| `shotguns` | Shotguns |
-| `smgs` | Submachine guns |
-| `machineguns` | Machine guns |
-| `bows` | Bows and crossbows |
-| `explosives` | Explosive weapons |
-| `blades` | Bladed melee weapons |
-| `clubs` | Club-type melee weapons |
-| `spears` | Spears |
-| `sledges` | Sledgehammers |
-| `knuckles` | Knuckle weapons |
-| `turrets` | Turret weapons |
+To find existing categories, look at the `"categories"` section of their mappings.json. Each key is a valid category name.
 
-### Ammunition
-| Category | Description |
-|----------|-------------|
-| `ammo` | All ammunition (broad) |
-| `ammo9mm` | 9mm ammunition |
-| `ammo44` | .44 Magnum ammunition |
-| `ammo762` | 7.62mm ammunition |
-| `ammoshotgun` | Shotgun shells |
-| `ammoarrow` | Arrows and bolts |
-| `ammorocket` | Rockets |
-| `ammocomponents` | Bullet tips, casings, etc. |
+**Common category naming conventions:**
+- Broad categories: `weapons`, `food`, `resources`, `tools`, `medical`
+- Specific subcategories: `pistols`, `cannedfood`, `rawresources`, `miningtools`
+- Always lowercase, no spaces or special characters
 
-### Food & Drinks
-| Category | Description |
-|----------|-------------|
-| `food` | All food (broad) |
-| `cookedfood` | Cooked/prepared food |
-| `rawfood` | Raw food ingredients |
-| `cannedfood` | Canned food |
-| `drinks` | Beverages |
-| `farming` | Seeds and farming items |
-
-### Medical
-| Category | Description |
-|----------|-------------|
-| `medical` | All medical items (broad) |
-| `firstaid` | Bandages and first aid kits |
-| `medicine` | Medicine and drugs |
-| `buffs` | Buff items (vitamins, steroids) |
-
-### Resources
-| Category | Description |
-|----------|-------------|
-| `resources` | All resources (broad) |
-| `rawresources` | Raw materials (stone, iron, wood) |
-| `craftedresources` | Crafted materials (forged iron) |
-| `ores` | Ores and mining resources |
-| `electrical` | Electrical components |
-| `mechanical` | Mechanical parts |
-| `chemicals` | Chemical resources |
-| `organic` | Organic materials (leather, cloth) |
-
-### Tools
-| Category | Description |
-|----------|-------------|
-| `tools` | All tools (broad) |
-| `miningtools` | Pickaxes, augers |
-| `harvestingtools` | Axes, shovels |
-| `repairtools` | Wrenches, repair tools |
-| `constructiontools` | Nailguns, construction |
-
-### Armor & Clothing
-| Category | Description |
-|----------|-------------|
-| `armor` | All armor (broad) |
-| `armorhead` | Helmets |
-| `armorchest` | Chest armor |
-| `armorlegs` | Leg armor |
-| `armorboots` | Boot armor |
-| `armorgloves` | Glove armor |
-| `clothing` | All clothing (broad) |
-
-### Building
-| Category | Description |
-|----------|-------------|
-| `building` | All building materials (broad) |
-| `blocks` | Building blocks |
-| `doors` | Doors and hatches |
-| `traps` | Traps and defenses |
-| `lighting` | Lights and torches |
-| `storage` | Storage containers |
-| `workstations` | Crafting stations |
-| `furniture` | Furniture items |
-| `decorations` | Decorative items |
-
-### Vehicles
-| Category | Description |
-|----------|-------------|
-| `vehicles` | All vehicle items (broad) |
-| `vehicleparts` | Vehicle parts |
-| `vehiclemods` | Vehicle modifications |
-
-### Mods
-| Category | Description |
-|----------|-------------|
-| `mods` | All weapon/armor mods (broad) |
-| `weaponmods` | Weapon modifications |
-| `armormods` | Armor modifications |
-
-### Books & Learning
-| Category | Description |
-|----------|-------------|
-| `books` | All books (broad) |
-| `schematics` | Crafting schematics |
-| `skillbooks` | Skill magazines |
-
-### Other
-| Category | Description |
-|----------|-------------|
-| `treasure` | Valuables and treasure |
-| `treasuremaps` | Treasure maps |
-| `dukes` | Duke's Casino Tokens |
-| `misc` | Miscellaneous items |
-| `junk` | Junk/scrap items |
-| `unknown` | Uncategorized items |
+When adding a new category, check if a similar one already exists that the user could use instead.
 
 ---
 
