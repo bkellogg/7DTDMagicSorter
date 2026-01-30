@@ -2,6 +2,52 @@
 
 This document provides instructions for AI assistants (Claude, GPT, Cursor, etc.) to help users modify the `mappings.json` file for the MagicSorter mod in 7 Days to Die.
 
+---
+
+## What is MagicSorter?
+
+MagicSorter is a mod that automatically sorts items between storage containers. Players set up:
+
+1. **Input containers** - labeled with a sign reading `[MagicSort]`
+2. **Output containers** - labeled with signs like `[ms:food]`, `[ms:ammo]`, `[ms:weapons]`, etc.
+
+When the player runs `ms sort` in the console (or uses the UI button), items move from input containers to the appropriate output containers based on category mappings.
+
+## What does mappings.json do?
+
+The `mappings.json` file defines:
+- **What categories exist** (food, weapons, ammo, medical, etc.)
+- **Which items belong to which categories** (via patterns or direct mappings)
+- **Fallback behavior** (if no `[ms:pistols]` container exists, pistols go to `[ms:weapons]` instead)
+
+## Why would someone customize it?
+
+Common reasons users want to edit mappings:
+
+| Scenario | Solution |
+|----------|----------|
+| "I want to separate canned food from cooked food" | Create a new category or use existing subcategories |
+| "I installed a mod that adds new items and they're not sorting" | Add patterns or direct mappings for the modded items |
+| "I want all explosives-related stuff in one box" | Create a custom category with patterns matching those items |
+| "I don't like how X item is categorized" | Add a higher-priority pattern or direct item mapping |
+| "I want a shortcut name for my container" | Add an alias |
+
+## Understanding User Requests
+
+When a user asks for help, they're typically trying to:
+
+1. **Create a new organizational category** - "I want a box just for building materials"
+2. **Recategorize specific items** - "Put gunpowder with ammo, not resources"
+3. **Handle new/modded items** - "Items from [ModName] aren't sorting anywhere"
+4. **Fix unexpected behavior** - "Why is X going to the wrong container?"
+
+Ask clarifying questions like:
+- "What items should go in this category?"
+- "What container do you want these items to fall back to if your specific container doesn't exist?"
+- "Do you know the internal item names, or should I suggest patterns based on common naming?"
+
+---
+
 ## File Location
 
 The file is located at: `Mods/MagicSorter/mappings.json`
