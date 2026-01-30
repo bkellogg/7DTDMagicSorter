@@ -436,6 +436,100 @@ If reload fails, check JSON syntax at https://jsonlint.com
 
 ---
 
+## Useful Console Commands
+
+These commands help debug mappings issues:
+
+### `ms scan`
+
+Shows items in the `[MagicSort]` input container grouped by their detected category, with internal item names:
+
+```
+[MagicSorter] Items in [MagicSort] by category:
+  food:
+    - foodCanChili (x5)
+    - foodBaconAndEggs (x2)
+  ammo:
+    - ammo9mmBullet (x100)
+```
+
+**Use this when:**
+- User needs to find internal item names for patterns
+- Verifying items are being categorized correctly
+- User says "what is X called internally?"
+
+### `ms missing`
+
+Analyzes items in `[MagicSort]` and identifies categories that have items but no matching output container:
+
+```
+[MagicSorter] Missing containers for categories:
+  - cannedfood (5 items)
+  - pistols (2 items)
+[MagicSorter] Suggested containers to create:
+  [ms:cannedfood]
+  [ms:pistols]
+```
+
+**Use this when:**
+- User says "items aren't being sorted"
+- User wants to know what containers they're missing
+- Figuring out why items stay in the input container
+
+### `ms plan`
+
+Dry-run that shows where each item WOULD go without actually moving anything.
+
+**Use this when:**
+- Testing mappings changes before committing to a sort
+- User wants to verify their changes work correctly
+
+### `ms list`
+
+Shows all containers found in range and their category assignments.
+
+**Use this when:**
+- Verifying container signs are being detected correctly
+- User says "my container isn't being recognized"
+
+### `ms debug`
+
+Shows detailed debug info for each item in `[MagicSort]`:
+
+```
+[MagicSorter] Debug - Item details in [MagicSort]:
+  Bacon and Eggs x5:
+    Internal name: foodBaconAndEggs
+    Game groups: Food/Cooking
+    Categories: food, cookedfood
+    Mapping: PATTERN
+```
+
+**Use this when:**
+- Need to understand WHY an item is categorized a certain way
+- Checking if item matched via direct mapping, pattern, or fallback
+- User says "why is X going to the wrong place?"
+
+### `ms suggest`
+
+Like `ms missing` but more detailed - shows exactly which items can't be sorted and groups them by suggested container:
+
+```
+[MagicSorter] 3 item(s) cannot be sorted. Suggested containers:
+  Create [ms:cannedfood] for:
+    - foodCanChili x5 [food → cannedfood]
+    - foodCanPeas x2 [food → cannedfood]
+  Create [ms:unknown] for:
+    - modItemWeird x1 [(none)]
+```
+
+**Use this when:**
+- User wants detailed info on what's not sorting and why
+- Need to see the full category chain for unsortable items
+- Deciding whether to create new containers or add patterns
+
+---
+
 ## Example: Complete New Category
 
 User request: "Add a category for explosive materials"
