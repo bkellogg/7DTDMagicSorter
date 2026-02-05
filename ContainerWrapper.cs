@@ -146,6 +146,18 @@ namespace MagicSorter
         }
 
         /// <summary>
+        ///     Checks if this container already contains items of the given type
+        /// </summary>
+        public bool ContainsItemType(int itemType)
+        {
+            var items = GetItems();
+            if (items == null)
+                return false;
+
+            return items.Any(slot => !slot.IsEmpty() && slot.itemValue.type == itemType);
+        }
+
+        /// <summary>
         ///     Checks if this container has space for the given item (empty slot or stackable)
         /// </summary>
         public bool HasSpaceFor(ItemStack itemToAdd)
