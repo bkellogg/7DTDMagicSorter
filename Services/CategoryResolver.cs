@@ -155,7 +155,7 @@ namespace MagicSorter.Services
                                 Specificity = specificity,
                                 Category = category,
                                 IsExactMatch = true,
-                                HasSameItemType = itemType >= 0 && container.ContainsItemType(itemType)
+                                SameItemTypeCount = itemType >= 0 ? container.CountItemType(itemType) : 0
                             });
                 }
 
@@ -175,7 +175,7 @@ namespace MagicSorter.Services
                                     Specificity = specificity,
                                     Category = resolvedCategory,
                                     IsExactMatch = true,
-                                    HasSameItemType = itemType >= 0 && container.ContainsItemType(itemType)
+                                    SameItemTypeCount = itemType >= 0 ? container.CountItemType(itemType) : 0
                                 });
                     }
 
@@ -199,7 +199,7 @@ namespace MagicSorter.Services
                                         Specificity = specificity,
                                         Category = category,
                                         IsExactMatch = true,
-                                        HasSameItemType = itemType >= 0 && container.ContainsItemType(itemType)
+                                        SameItemTypeCount = itemType >= 0 ? container.CountItemType(itemType) : 0
                                     });
                             }
                         }
@@ -237,7 +237,7 @@ namespace MagicSorter.Services
                                         Specificity = specificity,
                                         Category = fallbackCategory,
                                         IsExactMatch = false,
-                                        HasSameItemType = itemType >= 0 && container.ContainsItemType(itemType)
+                                        SameItemTypeCount = itemType >= 0 ? container.CountItemType(itemType) : 0
                                     });
                         }
 
@@ -259,7 +259,7 @@ namespace MagicSorter.Services
                                         Specificity = specificity,
                                         Category = resolvedFallback,
                                         IsExactMatch = false,
-                                        HasSameItemType = itemType >= 0 && container.ContainsItemType(itemType)
+                                        SameItemTypeCount = itemType >= 0 ? container.CountItemType(itemType) : 0
                                     });
                             }
                         }
@@ -284,7 +284,7 @@ namespace MagicSorter.Services
                                             Specificity = specificity,
                                             Category = fallbackCategory,
                                             IsExactMatch = false,
-                                            HasSameItemType = itemType >= 0 && container.ContainsItemType(itemType)
+                                            SameItemTypeCount = itemType >= 0 ? container.CountItemType(itemType) : 0
                                         });
                                 }
                             }
@@ -307,14 +307,14 @@ namespace MagicSorter.Services
                 candidates = candidates
                     .OrderByDescending(c => c.Specificity)
                     .ThenByDescending(c => c.IsExactMatch)
-                    .ThenByDescending(c => c.HasSameItemType)
+                    .ThenByDescending(c => c.SameItemTypeCount)
                     .ThenByDescending(c => c.Container.GetFullness())
                     .ToList();
             else
                 // Original behavior: prefer fullest container
                 candidates = candidates
                     .OrderByDescending(c => c.IsExactMatch)
-                    .ThenByDescending(c => c.HasSameItemType)
+                    .ThenByDescending(c => c.SameItemTypeCount)
                     .ThenByDescending(c => c.Container.GetFullness())
                     .ToList();
 
@@ -347,7 +347,7 @@ namespace MagicSorter.Services
             public int Specificity { get; set; }
             public string Category { get; set; }
             public bool IsExactMatch { get; set; }
-            public bool HasSameItemType { get; set; }
+            public int SameItemTypeCount { get; set; }
         }
     }
 }

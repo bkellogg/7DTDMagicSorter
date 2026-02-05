@@ -146,15 +146,15 @@ namespace MagicSorter
         }
 
         /// <summary>
-        ///     Checks if this container already contains items of the given type
+        ///     Counts how many slots in this container hold items of the given type
         /// </summary>
-        public bool ContainsItemType(int itemType)
+        public int CountItemType(int itemType)
         {
             var items = GetItems();
             if (items == null)
-                return false;
+                return 0;
 
-            return items.Any(slot => !slot.IsEmpty() && slot.itemValue.type == itemType);
+            return items.Count(slot => !slot.IsEmpty() && slot.itemValue.type == itemType);
         }
 
         /// <summary>
