@@ -138,6 +138,7 @@ namespace MagicSorter.Services
 
             var mappings = _mappingLoader?.GetMappings();
             var candidates = new List<ContainerCandidate>();
+            var itemType = itemStack?.itemValue?.type ?? -1;
 
             // Find all matching containers with their specificity
             foreach (var category in itemCategories)
@@ -153,7 +154,8 @@ namespace MagicSorter.Services
                                 Container = container,
                                 Specificity = specificity,
                                 Category = category,
-                                IsExactMatch = true
+                                IsExactMatch = true,
+                                SameItemTypeCount = itemType >= 0 ? container.CountItemType(itemType) : 0
                             });
                 }
 
@@ -172,7 +174,8 @@ namespace MagicSorter.Services
                                     Container = container,
                                     Specificity = specificity,
                                     Category = resolvedCategory,
-                                    IsExactMatch = true
+                                    IsExactMatch = true,
+                                    SameItemTypeCount = itemType >= 0 ? container.CountItemType(itemType) : 0
                                 });
                     }
 
@@ -195,7 +198,8 @@ namespace MagicSorter.Services
                                         Container = container,
                                         Specificity = specificity,
                                         Category = category,
-                                        IsExactMatch = true
+                                        IsExactMatch = true,
+                                        SameItemTypeCount = itemType >= 0 ? container.CountItemType(itemType) : 0
                                     });
                             }
                         }
@@ -232,7 +236,8 @@ namespace MagicSorter.Services
                                         Container = container,
                                         Specificity = specificity,
                                         Category = fallbackCategory,
-                                        IsExactMatch = false // Fallback is not exact
+                                        IsExactMatch = false,
+                                        SameItemTypeCount = itemType >= 0 ? container.CountItemType(itemType) : 0
                                     });
                         }
 
@@ -253,7 +258,8 @@ namespace MagicSorter.Services
                                         Container = container,
                                         Specificity = specificity,
                                         Category = resolvedFallback,
-                                        IsExactMatch = false
+                                        IsExactMatch = false,
+                                        SameItemTypeCount = itemType >= 0 ? container.CountItemType(itemType) : 0
                                     });
                             }
                         }
@@ -277,7 +283,8 @@ namespace MagicSorter.Services
                                             Container = container,
                                             Specificity = specificity,
                                             Category = fallbackCategory,
-                                            IsExactMatch = false
+                                            IsExactMatch = false,
+                                            SameItemTypeCount = itemType >= 0 ? container.CountItemType(itemType) : 0
                                         });
                                 }
                             }
@@ -295,17 +302,19 @@ namespace MagicSorter.Services
             if (candidates.Count == 0)
                 return null;
 
-            // Sort by: specificity (highest first), exact match (true first), fullness (fullest first)
+            // Sort by: specificity, exact match, same item type (group like items), fullness
             if (_config.UseSpecificityResolution)
                 candidates = candidates
                     .OrderByDescending(c => c.Specificity)
                     .ThenByDescending(c => c.IsExactMatch)
+                    .ThenByDescending(c => c.SameItemTypeCount)
                     .ThenByDescending(c => c.Container.GetFullness())
                     .ToList();
             else
                 // Original behavior: prefer fullest container
                 candidates = candidates
                     .OrderByDescending(c => c.IsExactMatch)
+                    .ThenByDescending(c => c.SameItemTypeCount)
                     .ThenByDescending(c => c.Container.GetFullness())
                     .ToList();
 
@@ -338,6 +347,7 @@ namespace MagicSorter.Services
             public int Specificity { get; set; }
             public string Category { get; set; }
             public bool IsExactMatch { get; set; }
+            public int SameItemTypeCount { get; set; }
         }
     }
 }
