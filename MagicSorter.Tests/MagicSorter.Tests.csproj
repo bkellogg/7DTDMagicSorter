@@ -46,6 +46,7 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="CategoryResolverPatternTests.cs"/>
+        <Compile Include="ItemGroupingTests.cs"/>
     </ItemGroup>
     <ItemGroup>
         <None Include="packages.config"/>

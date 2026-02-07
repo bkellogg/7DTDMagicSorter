@@ -784,8 +784,156 @@ namespace MagicSorter
                 return;
             }
 
-            // Sort items
-            SortItems(sortMeContainer, categoryContainers);
+            // Phase 1: Determine which containers will be affected by the sort
+            // We need ALL containers that match item categories, not just ones with space,
+            // so we can consolidate items of the same type together
+            var sortMeItems = sortMeContainer.GetItems();
+            var affectedContainers = new HashSet<ContainerWrapper>();
+
+            foreach (var itemStack in sortMeItems)
+            {
+                if (itemStack.IsEmpty()) continue;
+
+                var categories = GetItemCategories(itemStack);
+
+                // Add ALL containers that match any of the item's categories
+                foreach (var category in categories)
+                {
+                    if (categoryContainers.TryGetValue(category, out var matchingContainers))
+                    {
+                        foreach (var c in matchingContainers)
+                            affectedContainers.Add(c);
+                    }
+                }
+
+                // Also include Unknown containers if item has no matching category
+                if (categories.Count == 0 && categoryContainers.TryGetValue(UnknownCategory, out var unknownContainers))
+                {
+                    foreach (var c in unknownContainers)
+                        affectedContainers.Add(c);
+                }
+            }
+
+            if (affectedContainers.Count == 0)
+            {
+                MagicSorterMod.Output("[MagicSorter] No destination containers found for items.");
+                return;
+            }
+
+            // Phase 2: Collect all items from MagicSort and affected containers
+            var collectedItems = new List<ItemStack>();
+
+            // Collect from MagicSort
+            foreach (var itemStack in sortMeItems)
+            {
+                if (itemStack.IsEmpty()) continue;
+                collectedItems.Add(itemStack.Clone());
+            }
+
+            // Clear MagicSort
+            for (var i = 0; i < sortMeItems.Length; i++)
+                sortMeItems[i] = ItemStack.Empty.Clone();
+            sortMeContainer.SetModified();
+
+            // Collect from affected destination containers
+            foreach (var container in affectedContainers)
+            {
+                var items = container.GetItems();
+                if (items == null) continue;
+
+                for (var i = 0; i < items.Length; i++)
+                {
+                    if (items[i].IsEmpty()) continue;
+                    collectedItems.Add(items[i].Clone());
+                    items[i] = ItemStack.Empty.Clone();
+                }
+                container.SetModified();
+            }
+
+            MagicSorterMod.Output($"[MagicSorter] Consolidating {collectedItems.Count} item stacks across {affectedContainers.Count} container(s)...");
+
+            // Phase 3: Re-sort all collected items, grouped by type
+            var sortedByType = collectedItems.OrderBy(item => item.itemValue.type).ToList();
+            var unsortedItems = new List<ItemStack>();
+
+            foreach (var itemStack in sortedByType)
+            {
+                var itemName = GetItemName(itemStack);
+                var itemDesc = $"{itemName} x{itemStack.count}";
+                var categories = GetItemCategories(itemStack);
+
+                var targetContainer = FindBestContainer(categories, categoryContainers, itemStack);
+
+                if (targetContainer == null)
+                {
+                    if (categoryContainers.TryGetValue(UnknownCategory, out var unknownContainers))
+                        targetContainer = GetFullestContainerWithSpace(unknownContainers, itemStack);
+
+                    if (targetContainer == null)
+                    {
+                        // Can't place - will go back to MagicSort
+                        unsortedItems.Add(itemStack);
+                        var matchingCategory = FindMatchingCategory(categories, categoryContainers);
+                        if (matchingCategory != null)
+                            _failedItems.Add($"{itemDesc} → [ms:{matchingCategory}] is full");
+                        else if (categories.Count == 0)
+                            _failedItems.Add($"{itemDesc} → no category, no [ms:Unknown]");
+                        else
+                            _failedItems.Add($"{itemDesc} → no container for [{string.Join(", ", categories)}]");
+                        continue;
+                    }
+                }
+
+                if (TryPlaceItem(targetContainer, itemStack, out var targetCategory))
+                {
+                    if (!_sortedItems.ContainsKey(targetCategory))
+                        _sortedItems[targetCategory] = new List<string>();
+                    _sortedItems[targetCategory].Add(itemDesc);
+                }
+                else
+                {
+                    // Failed to place - will go back to MagicSort
+                    unsortedItems.Add(itemStack);
+                    _failedItems.Add($"{itemDesc} → [ms:{targetCategory}] no space");
+                }
+            }
+
+            // Phase 4: Put unsorted items back into MagicSort (or any container with space)
+            if (unsortedItems.Count > 0)
+            {
+                var trulyLostItems = new List<string>();
+                foreach (var itemStack in unsortedItems)
+                {
+                    var itemName = GetItemName(itemStack);
+                    var itemDesc = $"{itemName} x{itemStack.count}";
+
+                    // Try MagicSort first
+                    if (TryPlaceItem(sortMeContainer, itemStack, out _))
+                        continue;
+
+                    // MagicSort full - try any affected container
+                    var placed = false;
+                    foreach (var container in affectedContainers)
+                    {
+                        if (TryPlaceItem(container, itemStack, out _))
+                        {
+                            placed = true;
+                            break;
+                        }
+                    }
+
+                    if (!placed)
+                        trulyLostItems.Add(itemDesc);
+                }
+                sortMeContainer.SetModified();
+
+                if (trulyLostItems.Count > 0)
+                {
+                    MagicSorterMod.Output($"[MagicSorter] WARNING: {trulyLostItems.Count} item(s) could not be placed anywhere!");
+                    foreach (var item in trulyLostItems)
+                        MagicSorterMod.Output($"  LOST: {item}");
+                }
+            }
 
             // Log summary
             LogSummary();
@@ -849,8 +997,12 @@ namespace MagicSorter
 
             MagicSorterMod.Output($"[MagicSorter] Collected {collectedItems.Count} item stacks for resorting...");
 
-            // Phase 2: Re-sort all collected items
-            foreach (var itemStack in collectedItems)
+            // Phase 2: Re-sort all collected items, grouped by item type
+            // This ensures items of the same type are processed together, so SameItemTypeCount works correctly
+            var sortedByType = collectedItems.OrderBy(item => item.itemValue.type).ToList();
+            var unsortedItems = new List<ItemStack>();
+
+            foreach (var itemStack in sortedByType)
             {
                 var itemName = GetItemName(itemStack);
                 var itemDesc = $"{itemName} x{itemStack.count}";
@@ -867,6 +1019,8 @@ namespace MagicSorter
 
                     if (targetContainer == null)
                     {
+                        // Can't place - will go to MagicSort
+                        unsortedItems.Add(itemStack);
                         var matchingCategory = FindMatchingCategory(categories, categoryContainers);
                         if (matchingCategory != null)
                             _failedItems.Add($"{itemDesc} → [ms:{matchingCategory}] is full");
@@ -887,7 +1041,56 @@ namespace MagicSorter
                 }
                 else
                 {
+                    // Failed to place - will go to MagicSort
+                    unsortedItems.Add(itemStack);
                     _failedItems.Add($"{itemDesc} → [ms:{targetCategory}] no space");
+                }
+            }
+
+            // Phase 3: Put unsorted items into MagicSort or any container with space
+            if (unsortedItems.Count > 0)
+            {
+                var trulyLostItems = new List<string>();
+                foreach (var itemStack in unsortedItems)
+                {
+                    var itemName = GetItemName(itemStack);
+                    var itemDesc = $"{itemName} x{itemStack.count}";
+                    var placed = false;
+
+                    // Try MagicSort first (if available)
+                    if (sortMeContainer != null && TryPlaceItem(sortMeContainer, itemStack, out _))
+                    {
+                        placed = true;
+                    }
+                    else
+                    {
+                        // Try any category container
+                        foreach (var kvp in categoryContainers)
+                        {
+                            foreach (var container in kvp.Value)
+                            {
+                                if (TryPlaceItem(container, itemStack, out _))
+                                {
+                                    placed = true;
+                                    break;
+                                }
+                            }
+                            if (placed) break;
+                        }
+                    }
+
+                    if (!placed)
+                        trulyLostItems.Add(itemDesc);
+                }
+
+                if (sortMeContainer != null)
+                    sortMeContainer.SetModified();
+
+                if (trulyLostItems.Count > 0)
+                {
+                    MagicSorterMod.Output($"[MagicSorter] WARNING: {trulyLostItems.Count} item(s) could not be placed anywhere!");
+                    foreach (var item in trulyLostItems)
+                        MagicSorterMod.Output($"  LOST: {item}");
                 }
             }
 
@@ -1073,64 +1276,6 @@ namespace MagicSorter
         {
             var items = container.GetItems();
             return items == null || items.All(slot => slot.IsEmpty());
-        }
-
-        private void SortItems(ContainerWrapper sortMe,
-            Dictionary<string, List<ContainerWrapper>> categoryContainers)
-        {
-            var items = sortMe.GetItems();
-            if (items == null)
-            {
-                MagicSorterMod.Output("[MagicSorter] Could not access items in [MagicSort] container");
-                return;
-            }
-
-            for (var i = 0; i < items.Length; i++)
-            {
-                var itemStack = items[i];
-                if (itemStack.IsEmpty()) continue;
-
-                var itemName = GetItemName(itemStack);
-                var itemDesc = $"{itemName} x{itemStack.count}";
-                var categories = GetItemCategories(itemStack);
-
-                // Try to find a matching container
-                var targetContainer = FindBestContainer(categories, categoryContainers, itemStack);
-
-                if (targetContainer == null)
-                {
-                    // Try unknown fallback
-                    if (categoryContainers.TryGetValue(UnknownCategory, out var unknownContainers))
-                        targetContainer = GetFullestContainerWithSpace(unknownContainers, itemStack);
-
-                    if (targetContainer == null)
-                    {
-                        // Determine why: container full or no container exists
-                        var matchingCategory = FindMatchingCategory(categories, categoryContainers);
-
-                        if (matchingCategory != null)
-                            _failedItems.Add($"{itemDesc} → [ms:{matchingCategory}] is full");
-                        else if (categories.Count == 0)
-                            _failedItems.Add($"{itemDesc} → no category, no [ms:Unknown]");
-                        else
-                            _failedItems.Add(
-                                $"{itemDesc} → no container for [{string.Join(", ", categories)}]");
-                        continue;
-                    }
-                }
-
-                // Try to move the item
-                if (TryMoveItem(sortMe, i, targetContainer, itemStack, out var targetCategory))
-                {
-                    if (!_sortedItems.ContainsKey(targetCategory))
-                        _sortedItems[targetCategory] = new List<string>();
-                    _sortedItems[targetCategory].Add(itemDesc);
-                }
-                else
-                {
-                    _failedItems.Add($"{itemDesc} → [ms:{targetCategory}] no space");
-                }
-            }
         }
 
         private List<string> GetItemCategories(ItemStack itemStack)
