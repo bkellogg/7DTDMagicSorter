@@ -51,6 +51,9 @@ namespace MagicSorter
                 case "version":
                     Output($"[MagicSorter] Version {MagicSorterMod.Version}");
                     return;
+                case "reload":
+                    ReloadMappings();
+                    return;
             }
 
             // Get default range from config
@@ -151,6 +154,28 @@ namespace MagicSorter
             Output($"  Tags defined: {mappings.Tags.Count}");
         }
 
+        private static void ReloadMappings()
+        {
+            var loader = MagicSorterMod.MappingLoader;
+            if (loader == null)
+            {
+                Output("[MagicSorter] Mapping loader not initialized");
+                return;
+            }
+
+            if (loader.Reload())
+            {
+                // Reinitialize the resolver with new mappings
+                MagicSorterMod.ReinitializeResolver();
+                Output("[MagicSorter] Mappings reloaded successfully");
+                Output($"[MagicSorter] {loader.GetStatus()}");
+            }
+            else
+            {
+                Output("[MagicSorter] Failed to reload mappings");
+            }
+        }
+
         private static void ShowHelp()
         {
             var defaultRange = MagicSorterMod.Config?.DefaultRange ?? 20;
@@ -166,6 +191,7 @@ namespace MagicSorter
             Output("  debug    - Show internal item names for mapping");
             Output("  config   - Show current configuration");
             Output("  mappings - Show loaded mappings status");
+            Output("  reload   - Reload mappings from disk");
             Output("  version  - Show mod version");
             Output($"  [range]  - Optional search radius (default: {defaultRange})");
         }

@@ -118,7 +118,7 @@
     { "type": "Prefix", "match": "resource", "categories": ["resources"], "priority": 720 },
 
     { "type": "Prefix", "match": "drink", "categories": ["food", "drinks"], "priority": 710 },
-    { "type": "Prefix", "match": "foodCan", "categories": ["food", "cannedfood"], "priority": 705 },
+    { "type": "Prefix", "match": "foodCan", "categories": ["food", "canned", "cannedfood"], "priority": 705 },
     { "type": "Prefix", "match": "foodRaw", "categories": ["food", "rawfood"], "priority": 700 },
     { "type": "Prefix", "match": "foodCrop", "categories": ["food", "rawfood"], "priority": 700 },
     { "type": "Prefix", "match": "food", "categories": ["food", "cookedfood"], "priority": 695 },
@@ -430,8 +430,12 @@
       "specificity": 90,
       "description": "Raw food ingredients"
     },
+    "canned": {
+      "specificity": 100,
+      "description": "Canned food items (high priority)"
+    },
     "cannedfood": {
-      "specificity": 90,
+      "specificity": 100,
       "description": "Canned food"
     },
     "drinks": {
@@ -2032,6 +2036,7 @@
     "knuckles": "melee",
     "cookedfood": "food",
     "rawfood": "food",
+    "canned": "cannedfood",
     "cannedfood": "food",
     "drinks": "food",
     "farm": "farming",

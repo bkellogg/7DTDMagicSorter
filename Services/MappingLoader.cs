@@ -89,5 +89,24 @@ namespace MagicSorter.Services
         {
             return $"Version: {Version}, Categories: {CategoryCount}, Items: {ItemCount}";
         }
+
+        /// <summary>
+        ///     Reloads mappings from disk
+        /// </summary>
+        /// <returns>True if reload was successful</returns>
+        public bool Reload()
+        {
+            Log.Out("[MagicSorter] Reloading mappings from disk...");
+
+            if (TryLoadLocalMappings())
+            {
+                Log.Out(
+                    $"[MagicSorter] Reloaded local mappings (v{Version}, {CategoryCount} categories, {ItemCount} items)");
+                return true;
+            }
+
+            Log.Warning("[MagicSorter] Failed to reload mappings - keeping previous mappings");
+            return false;
+        }
     }
 }

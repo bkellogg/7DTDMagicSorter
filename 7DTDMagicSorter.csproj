@@ -106,7 +106,10 @@
     <Target Name="DeployMod" AfterTargets="Build">
         <PropertyGroup>
             <ModFolder>$(GamePath)\Mods\$(ModName)</ModFolder>
+            <ServerPath>C:\Program Files (x86)\Steam\steamapps\common\7 Days to Die Dedicated Server</ServerPath>
+            <ServerModFolder>$(ServerPath)\Mods\$(ModName)</ServerModFolder>
         </PropertyGroup>
+        <!-- Deploy to client -->
         <MakeDir Directories="$(ModFolder)" Condition="!Exists('$(ModFolder)')"/>
         <MakeDir Directories="$(ModFolder)\Config" Condition="!Exists('$(ModFolder)\Config')"/>
         <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ModFolder)"/>
@@ -115,6 +118,15 @@
         <Copy SourceFiles="$(ProjectDir)Config\Localization.txt" DestinationFolder="$(ModFolder)\Config" Condition="Exists('$(ProjectDir)Config\Localization.txt')"/>
         <Copy SourceFiles="$(ProjectDir)mappings.json" DestinationFolder="$(ModFolder)" Condition="Exists('$(ProjectDir)mappings.json')"/>
         <Message Text="Deployed $(ModName) to $(ModFolder)" Importance="high"/>
+        <!-- Deploy to dedicated server -->
+        <MakeDir Directories="$(ServerModFolder)" Condition="Exists('$(ServerPath)') And !Exists('$(ServerModFolder)')"/>
+        <MakeDir Directories="$(ServerModFolder)\Config" Condition="Exists('$(ServerPath)') And !Exists('$(ServerModFolder)\Config')"/>
+        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ServerModFolder)" Condition="Exists('$(ServerPath)')"/>
+        <Copy SourceFiles="$(ProjectDir)ModInfo.xml" DestinationFolder="$(ServerModFolder)" Condition="Exists('$(ServerPath)')"/>
+        <Copy SourceFiles="$(ProjectDir)Config\MagicSorter.xml" DestinationFolder="$(ServerModFolder)\Config" Condition="Exists('$(ServerPath)')"/>
+        <Copy SourceFiles="$(ProjectDir)Config\Localization.txt" DestinationFolder="$(ServerModFolder)\Config" Condition="Exists('$(ServerPath)') And Exists('$(ProjectDir)Config\Localization.txt')"/>
+        <Copy SourceFiles="$(ProjectDir)mappings.json" DestinationFolder="$(ServerModFolder)" Condition="Exists('$(ServerPath)') And Exists('$(ProjectDir)mappings.json')"/>
+        <Message Text="Deployed $(ModName) to $(ServerModFolder)" Importance="high" Condition="Exists('$(ServerPath)')"/>
     </Target>
 
 </Project>

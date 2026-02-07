@@ -43,6 +43,14 @@ namespace MagicSorter
             SingletonMonoBehaviour<SdtdConsole>.Instance.Output(message);
         }
 
+        /// <summary>
+        ///     Reinitializes the category resolver after mappings reload
+        /// </summary>
+        public static void ReinitializeResolver()
+        {
+            Resolver = new CategoryResolver(MappingLoader, Config);
+        }
+
         public void InitMod(Mod modInstance)
         {
             // Store mod path for config/cache access
