@@ -1269,7 +1269,7 @@ namespace MagicSorter
             var endIdx = containerName.IndexOf(']', startIdx);
             if (endIdx < 0) return null;
 
-            return containerName.Substring(startIdx, endIdx - startIdx).Trim();
+            return containerName.Substring(startIdx, endIdx - startIdx).Trim().Replace(" ", "");
         }
 
         private bool IsContainerEmpty(ContainerWrapper container)

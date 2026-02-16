@@ -3,6 +3,7 @@
   "patterns": [
     { "type": "Prefix", "match": "schematic", "categories": ["books", "schematics"], "priority": 1000 },
     { "type": "Contains", "match": "Schematic", "categories": ["books", "schematics"], "priority": 1000 },
+    { "type": "Contains", "match": "SkillMagazine", "categories": ["books", "skillbooks"], "priority": 1000 },
 
     { "type": "Contains", "match": "MechanicalParts", "categories": ["resources", "mechanical"], "priority": 950 },
     { "type": "Contains", "match": "Mechanical_Parts", "categories": ["resources", "mechanical"], "priority": 950 },
@@ -10,8 +11,8 @@
     { "type": "Contains", "match": "Electric_Parts", "categories": ["resources", "electrical"], "priority": 950 },
     { "type": "Contains", "match": "ElectricalParts", "categories": ["resources", "electrical"], "priority": 950 },
 
-    { "type": "Prefix", "match": "gun", "alsoMatch": "Parts", "alsoMatchType": "Contains", "categories": ["resources", "mechanical"], "priority": 940 },
-    { "type": "Prefix", "match": "melee", "alsoMatch": "Parts", "alsoMatchType": "Contains", "categories": ["resources", "mechanical"], "priority": 940 },
+    { "type": "Prefix", "match": "gun", "alsoMatch": "Parts", "alsoMatchType": "Contains", "categories": ["parts", "weaponparts"], "priority": 940 },
+    { "type": "Prefix", "match": "melee", "alsoMatch": "Parts", "alsoMatchType": "Contains", "categories": ["parts", "weaponparts"], "priority": 940 },
 
     { "type": "Prefix", "match": "gunBot", "categories": ["weapons", "turrets"], "priority": 900 },
 
@@ -83,6 +84,7 @@
     { "type": "Prefix", "match": "thrownGrenade", "categories": ["weapons", "explosives"], "priority": 770 },
     { "type": "Prefix", "match": "thrownFrag", "categories": ["weapons", "explosives"], "priority": 770 },
     { "type": "Prefix", "match": "thrownMolotov", "categories": ["weapons", "explosives"], "priority": 770 },
+    { "type": "Prefix", "match": "thrown", "categories": ["weapons", "explosives"], "priority": 760 },
 
     { "type": "Prefix", "match": "armor", "alsoMatch": "Helmet", "alsoMatchType": "Contains", "categories": ["armor", "armorhead"], "priority": 765 },
     { "type": "Prefix", "match": "armor", "alsoMatch": "Head", "alsoMatchType": "Contains", "categories": ["armor", "armorhead"], "priority": 765 },
@@ -92,7 +94,14 @@
     { "type": "Prefix", "match": "armor", "alsoMatch": "Feet", "alsoMatchType": "Contains", "categories": ["armor", "armorboots"], "priority": 765 },
     { "type": "Prefix", "match": "armor", "alsoMatch": "Gloves", "alsoMatchType": "Contains", "categories": ["armor", "armorgloves"], "priority": 765 },
     { "type": "Prefix", "match": "armor", "alsoMatch": "Hands", "alsoMatchType": "Contains", "categories": ["armor", "armorgloves"], "priority": 765 },
+    { "type": "Prefix", "match": "armor", "alsoMatch": "Outfit", "alsoMatchType": "Contains", "categories": ["armor", "armorchest"], "priority": 765 },
     { "type": "Prefix", "match": "armor", "categories": ["armor"], "priority": 760 },
+
+    { "type": "Prefix", "match": "clothing", "alsoMatch": "Head", "alsoMatchType": "Contains", "categories": ["clothing", "clothinghead"], "priority": 765 },
+    { "type": "Prefix", "match": "clothing", "alsoMatch": "Outfit", "alsoMatchType": "Contains", "categories": ["clothing", "clothingchest"], "priority": 765 },
+    { "type": "Prefix", "match": "clothing", "alsoMatch": "Feet", "alsoMatchType": "Contains", "categories": ["clothing", "clothingfeet"], "priority": 765 },
+    { "type": "Prefix", "match": "clothing", "alsoMatch": "Hands", "alsoMatchType": "Contains", "categories": ["clothing", "clothinghands"], "priority": 765 },
+    { "type": "Prefix", "match": "clothing", "categories": ["clothing"], "priority": 760 },
 
     { "type": "Prefix", "match": "resourceForged", "categories": ["resources", "craftedresources"], "priority": 750 },
     { "type": "Prefix", "match": "resourceScrap", "categories": ["resources", "rawresources"], "priority": 750 },
@@ -158,6 +167,13 @@
     { "type": "Contains", "match": "floorLight", "categories": ["building", "lighting"], "priority": 645 },
     { "type": "Contains", "match": "Fluorescent", "categories": ["building", "lighting"], "priority": 645 },
 
+    { "type": "Prefix", "match": "ladder", "categories": ["building", "blocks"], "priority": 645 },
+    { "type": "Contains", "match": "spotlight", "categories": ["building", "lighting"], "priority": 645 },
+
+    { "type": "Prefix", "match": "bedroll", "categories": ["building"], "priority": 640 },
+    { "type": "Prefix", "match": "frame", "categories": ["building", "blocks"], "priority": 640 },
+    { "type": "Equals", "match": "keystoneBlock", "categories": ["building"], "priority": 640 },
+    { "type": "Prefix", "match": "cnt", "alsoMatch": "WritableCrate", "alsoMatchType": "Contains", "categories": ["building", "storage"], "priority": 640 },
     { "type": "Prefix", "match": "crucible", "categories": ["building", "workstations"], "priority": 640 },
     { "type": "Prefix", "match": "forge", "categories": ["building", "workstations"], "priority": 640 },
     { "type": "Prefix", "match": "workbench", "categories": ["building", "workstations"], "priority": 640 },
@@ -181,6 +197,7 @@
     { "type": "Prefix", "match": "cookingGrill", "categories": ["tools"], "priority": 625 },
     { "type": "Prefix", "match": "beaker", "categories": ["tools"], "priority": 625 },
 
+    { "type": "Prefix", "match": "bucket", "categories": ["tools"], "priority": 620 },
     { "type": "Prefix", "match": "paint", "categories": ["resources"], "priority": 620 },
     { "type": "Prefix", "match": "dyePowder", "categories": ["resources"], "priority": 620 },
 
@@ -188,6 +205,7 @@
     { "type": "Prefix", "match": "smallStone", "categories": ["resources", "rawresources"], "priority": 615 },
     { "type": "Prefix", "match": "cobblestone", "categories": ["resources", "rawresources"], "priority": 615 },
 
+    { "type": "Prefix", "match": "note", "categories": ["treasure"], "priority": 610 },
     { "type": "Contains", "match": "oldCash", "categories": ["treasure", "dukes"], "priority": 610 },
     { "type": "Contains", "match": "casinoCoin", "categories": ["treasure", "dukes"], "priority": 610 },
     { "type": "Contains", "match": "casinoToken", "categories": ["treasure", "dukes"], "priority": 610 },
@@ -213,6 +231,9 @@
     { "type": "Contains", "match": "motionSensor", "categories": ["building", "traps"], "priority": 585 },
     { "type": "Contains", "match": "barbedWire", "categories": ["building", "traps"], "priority": 585 },
     { "type": "Contains", "match": "spikes", "categories": ["building", "traps"], "priority": 585 },
+    { "type": "Prefix", "match": "pressureplate", "categories": ["building", "traps"], "priority": 585 },
+    { "type": "Prefix", "match": "tripwirepost", "categories": ["building", "traps"], "priority": 585 },
+    { "type": "Prefix", "match": "speaker", "categories": ["building", "traps"], "priority": 585 },
 
     { "type": "Equals", "match": "vehicleMinibike", "categories": ["vehicles"], "priority": 580 },
     { "type": "Equals", "match": "vehicleMotorcycle", "categories": ["vehicles"], "priority": 580 },
@@ -529,6 +550,14 @@
     "decorations": {
       "specificity": 80,
       "description": "Decorative items"
+    },
+    "parts": {
+      "specificity": 50,
+      "description": "All parts (weapon and vehicle)"
+    },
+    "weaponparts": {
+      "specificity": 80,
+      "description": "Weapon and tool parts"
     },
     "vehicles": {
       "specificity": 50,
@@ -1583,6 +1612,10 @@
       "food",
       "farming"
     ],
+    "farmPlotBlockPlayer": [
+      "food",
+      "farming"
+    ],
     "medicalBandage": [
       "medical",
       "firstaid"
@@ -1855,7 +1888,8 @@
     "gas": "chemicals",
     "leather": "organic",
     "cloth": "organic",
-    "parts": "vehicleparts",
+    "gunparts": "weaponparts",
+    "meleeparts": "weaponparts",
     "engines": "mechanical",
     "walls": "blocks",
     "floors": "blocks",
@@ -2046,6 +2080,8 @@
     "buffs": "medical",
     "schematics": "books",
     "skillbooks": "books",
+    "weaponparts": "parts",
+    "parts": "resources",
     "vehicleparts": "vehicles",
     "vehiclemods": "vehicles",
     "armorhead": "armor",
