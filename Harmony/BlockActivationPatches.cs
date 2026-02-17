@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
 using HarmonyLib;
 
 namespace MagicSorter.Harmony
@@ -148,54 +147,130 @@ namespace MagicSorter.Harmony
         private static string GetContainerSignText(WorldBase world, int clrIdx, Vector3i blockPos)
         {
             var tileEntity = world.GetTileEntity(clrIdx, blockPos);
-            if (tileEntity == null) return null;
+            return SignTextHelper.GetSignText(tileEntity);
+        }
+    }
 
-            if (tileEntity is TileEntitySecureLootContainerSigned signedContainer)
+    /// <summary>
+    ///     Harmony patches for adding "Sort Vehicle" to vehicle activation menus
+    /// </summary>
+    [SuppressMessage("ReSharper", "UnusedType.Global")]
+    [SuppressMessage("ReSharper", "UnusedMember.Local")]
+    public static class VehicleActivationPatches
+    {
+        private const string VehicleCommandId = "magicsortvehicle";
+        private const string VehicleCommandIcon = "sort";
+
+        /// <summary>
+        ///     Tracks the vanilla command count so the OnEntityActivated prefix can identify
+        ///     our custom command by index. Set in GetActivationCommands (postfix), read in
+        ///     OnEntityActivated (prefix). Safe because both run on the main thread for the
+        ///     same vehicle the player is looking at. Reset to -1 when our command is not added,
+        ///     so it never accidentally matches a vanilla command index.
+        /// </summary>
+        private static int _lastVanillaCommandCount = -1;
+
+        /// <summary>
+        ///     Patch EntityVehicle.GetActivationCommands to append "Sort Vehicle"
+        /// </summary>
+        [HarmonyPatch(typeof(EntityVehicle), "GetActivationCommands")]
+        public static class VehicleGetCommandsPatch
+        {
+            [SuppressMessage("ReSharper", "InconsistentNaming")]
+            static void Postfix(ref EntityActivationCommand[] __result, EntityVehicle __instance,
+                EntityAlive _entityFocusing)
             {
-                return signedContainer.signText?.Text;
-            }
+                try
+                {
+                    if (__result == null || __result.Length == 0)
+                    {
+                        _lastVanillaCommandCount = -1;
+                        return;
+                    }
 
-            if (tileEntity is TileEntityComposite composite)
-            {
-                return GetCompositeSignText(composite);
-            }
+                    if (__instance.GetVehicle() == null || !__instance.hasStorage())
+                    {
+                        _lastVanillaCommandCount = -1;
+                        return;
+                    }
 
-            return null;
+                    var world = GameManager.Instance.World;
+                    var range = MagicSorterMod.Config?.DefaultRange ?? 20;
+                    if (!SignTextHelper.HasSortMeContainer(world, _entityFocusing.GetBlockPosition(), range))
+                    {
+                        _lastVanillaCommandCount = -1;
+                        return;
+                    }
+
+                    _lastVanillaCommandCount = __result.Length;
+
+                    var newCommands = new EntityActivationCommand[__result.Length + 1];
+                    Array.Copy(__result, newCommands, __result.Length);
+                    newCommands[__result.Length] = new EntityActivationCommand(
+                        VehicleCommandId,
+                        VehicleCommandIcon,
+                        true
+                    );
+                    __result = newCommands;
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning($"[MagicSorter] Error in VehicleGetCommandsPatch: {ex.Message}");
+                }
+            }
         }
 
-        private static string GetCompositeSignText(TileEntityComposite composite)
+        /// <summary>
+        ///     Patch EntityVehicle.OnEntityActivated to handle our custom command
+        /// </summary>
+        [HarmonyPatch(typeof(EntityVehicle), "OnEntityActivated")]
+        public static class VehicleOnActivatedPatch
         {
-            const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+            [SuppressMessage("ReSharper", "InconsistentNaming")]
+            static bool Prefix(int _indexInBlockActivationCommands, EntityAlive _entityFocusing,
+                EntityVehicle __instance, ref bool __result)
+            {
+                try
+                {
+                    if (_indexInBlockActivationCommands != _lastVanillaCommandCount)
+                        return true;
 
+                    var player = _entityFocusing as EntityPlayerLocal;
+                    if (player == null)
+                        return true;
+
+                    if (player.inventory.IsHoldingItemActionRunning())
+                    {
+                        __result = false;
+                        return false;
+                    }
+
+                    ExecuteSortVehicle(player, __instance);
+                    __result = false;
+                    return false;
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"[MagicSorter] Error in VehicleOnActivatedPatch: {ex.Message}");
+                    return true;
+                }
+            }
+        }
+
+        private static void ExecuteSortVehicle(EntityPlayerLocal player, EntityVehicle vehicle)
+        {
             try
             {
-                var type = composite.GetType();
-                var modulesField = type.GetField("modulesCustomOrder", flags);
-
-                if (modulesField == null) return null;
-                if (!(modulesField.GetValue(composite) is Array modules)) return null;
-
-                foreach (var module in modules)
-                {
-                    if (module?.GetType().Name.Contains("Signable") != true)
-                        continue;
-
-                    var signTextField = module.GetType().GetField("signText", flags);
-                    var signTextValue = signTextField?.GetValue(module);
-
-                    if (signTextValue == null) continue;
-
-                    var textProp = signTextValue.GetType().GetProperty("Text");
-                    if (textProp?.GetValue(signTextValue) is string text)
-                        return text;
-                }
+                var range = MagicSorterMod.Config?.DefaultRange ?? 20;
+                var manager = new ContainerManager(player, range);
+                manager.SortVehicle(vehicle);
+                GameManager.ShowTooltip(player, "Vehicle items sorted!");
             }
             catch (Exception ex)
             {
-                Log.Warning($"[MagicSorter] Error getting composite sign text: {ex.Message}");
+                Log.Error($"[MagicSorter] Error executing vehicle sort: {ex.Message}");
+                GameManager.ShowTooltip(player, "Vehicle sort failed - check console");
             }
-
-            return null;
         }
     }
 }

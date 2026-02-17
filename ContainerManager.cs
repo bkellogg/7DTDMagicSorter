@@ -853,50 +853,7 @@ namespace MagicSorter
             MagicSorterMod.Output($"[MagicSorter] Consolidating {collectedItems.Count} item stacks across {affectedContainers.Count} container(s)...");
 
             // Phase 3: Re-sort all collected items, grouped by type
-            var sortedByType = collectedItems.OrderBy(item => item.itemValue.type).ToList();
-            var unsortedItems = new List<ItemStack>();
-
-            foreach (var itemStack in sortedByType)
-            {
-                var itemName = GetItemName(itemStack);
-                var itemDesc = $"{itemName} x{itemStack.count}";
-                var categories = GetItemCategories(itemStack);
-
-                var targetContainer = FindBestContainer(categories, categoryContainers, itemStack);
-
-                if (targetContainer == null)
-                {
-                    if (categoryContainers.TryGetValue(UnknownCategory, out var unknownContainers))
-                        targetContainer = GetFullestContainerWithSpace(unknownContainers, itemStack);
-
-                    if (targetContainer == null)
-                    {
-                        // Can't place - will go back to MagicSort
-                        unsortedItems.Add(itemStack);
-                        var matchingCategory = FindMatchingCategory(categories, categoryContainers);
-                        if (matchingCategory != null)
-                            _failedItems.Add($"{itemDesc} → [ms:{matchingCategory}] is full");
-                        else if (categories.Count == 0)
-                            _failedItems.Add($"{itemDesc} → no category, no [ms:Unknown]");
-                        else
-                            _failedItems.Add($"{itemDesc} → no container for [{string.Join(", ", categories)}]");
-                        continue;
-                    }
-                }
-
-                if (TryPlaceItem(targetContainer, itemStack, out var targetCategory))
-                {
-                    if (!_sortedItems.ContainsKey(targetCategory))
-                        _sortedItems[targetCategory] = new List<string>();
-                    _sortedItems[targetCategory].Add(itemDesc);
-                }
-                else
-                {
-                    // Failed to place - will go back to MagicSort
-                    unsortedItems.Add(itemStack);
-                    _failedItems.Add($"{itemDesc} → [ms:{targetCategory}] no space");
-                }
-            }
+            var unsortedItems = PlaceItemsIntoContainers(collectedItems, categoryContainers);
 
             // Phase 4: Put unsorted items back into MagicSort (or any container with space)
             if (unsortedItems.Count > 0)
@@ -998,54 +955,7 @@ namespace MagicSorter
             MagicSorterMod.Output($"[MagicSorter] Collected {collectedItems.Count} item stacks for resorting...");
 
             // Phase 2: Re-sort all collected items, grouped by item type
-            // This ensures items of the same type are processed together, so SameItemTypeCount works correctly
-            var sortedByType = collectedItems.OrderBy(item => item.itemValue.type).ToList();
-            var unsortedItems = new List<ItemStack>();
-
-            foreach (var itemStack in sortedByType)
-            {
-                var itemName = GetItemName(itemStack);
-                var itemDesc = $"{itemName} x{itemStack.count}";
-                var categories = GetItemCategories(itemStack);
-
-                // Find best container for this item
-                var targetContainer = FindBestContainer(categories, categoryContainers, itemStack);
-
-                if (targetContainer == null)
-                {
-                    // Try unknown fallback
-                    if (categoryContainers.TryGetValue(UnknownCategory, out var unknownContainers))
-                        targetContainer = GetFullestContainerWithSpace(unknownContainers, itemStack);
-
-                    if (targetContainer == null)
-                    {
-                        // Can't place - will go to MagicSort
-                        unsortedItems.Add(itemStack);
-                        var matchingCategory = FindMatchingCategory(categories, categoryContainers);
-                        if (matchingCategory != null)
-                            _failedItems.Add($"{itemDesc} → [ms:{matchingCategory}] is full");
-                        else if (categories.Count == 0)
-                            _failedItems.Add($"{itemDesc} → no category, no [ms:Unknown]");
-                        else
-                            _failedItems.Add($"{itemDesc} → no container for [{string.Join(", ", categories)}]");
-                        continue;
-                    }
-                }
-
-                // Try to place the item
-                if (TryPlaceItem(targetContainer, itemStack, out var targetCategory))
-                {
-                    if (!_sortedItems.ContainsKey(targetCategory))
-                        _sortedItems[targetCategory] = new List<string>();
-                    _sortedItems[targetCategory].Add(itemDesc);
-                }
-                else
-                {
-                    // Failed to place - will go to MagicSort
-                    unsortedItems.Add(itemStack);
-                    _failedItems.Add($"{itemDesc} → [ms:{targetCategory}] no space");
-                }
-            }
+            var unsortedItems = PlaceItemsIntoContainers(collectedItems, categoryContainers);
 
             // Phase 3: Put unsorted items into MagicSort or any container with space
             if (unsortedItems.Count > 0)
@@ -1101,6 +1011,60 @@ namespace MagicSorter
         /// <summary>
         ///     Places an item into a container (used by resort when items are already in memory)
         /// </summary>
+        /// <summary>
+        ///     Sorts items into category containers, tracking results in _sortedItems/_failedItems.
+        ///     Items are grouped by type before placement so same-type items stay together.
+        ///     Returns any items that could not be placed.
+        /// </summary>
+        private List<ItemStack> PlaceItemsIntoContainers(
+            List<ItemStack> items,
+            Dictionary<string, List<ContainerWrapper>> categoryContainers)
+        {
+            var sortedByType = items.OrderBy(item => item.itemValue.type).ToList();
+            var unsortedItems = new List<ItemStack>();
+
+            foreach (var itemStack in sortedByType)
+            {
+                var itemName = GetItemName(itemStack);
+                var itemDesc = $"{itemName} x{itemStack.count}";
+                var categories = GetItemCategories(itemStack);
+
+                var targetContainer = FindBestContainer(categories, categoryContainers, itemStack);
+
+                if (targetContainer == null &&
+                    categoryContainers.TryGetValue(UnknownCategory, out var unknownContainers))
+                    targetContainer = GetFullestContainerWithSpace(unknownContainers, itemStack);
+
+                if (targetContainer == null)
+                {
+                    unsortedItems.Add(itemStack);
+                    var matchingCategory = FindMatchingCategory(categories, categoryContainers);
+                    if (matchingCategory != null)
+                        _failedItems.Add($"{itemDesc} → [ms:{matchingCategory}] is full");
+                    else if (categories.Count == 0)
+                        _failedItems.Add($"{itemDesc} → no category, no [ms:Unknown]");
+                    else
+                        _failedItems.Add(
+                            $"{itemDesc} → no container for [{string.Join(", ", categories)}]");
+                    continue;
+                }
+
+                if (TryPlaceItem(targetContainer, itemStack, out var targetCategory))
+                {
+                    if (!_sortedItems.ContainsKey(targetCategory))
+                        _sortedItems[targetCategory] = new List<string>();
+                    _sortedItems[targetCategory].Add(itemDesc);
+                }
+                else
+                {
+                    unsortedItems.Add(itemStack);
+                    _failedItems.Add($"{itemDesc} → [ms:{targetCategory}] no space");
+                }
+            }
+
+            return unsortedItems;
+        }
+
         private bool TryPlaceItem(ContainerWrapper target, ItemStack itemStack, out string targetCategory)
         {
             targetCategory = ExtractCategory(target.Name) ?? UnknownCategory;
@@ -1185,17 +1149,234 @@ namespace MagicSorter
             MagicSorterMod.Output($"[MagicSorter] Resort summary: {totalSorted} items placed, {_failedItems.Count} failed");
         }
 
+        public List<EntityVehicle> FindVehiclesInRange()
+        {
+            var playerPos = _player.position;
+            var center = playerPos - Origin.position;
+            var size = new Vector3(_range * 2, _range * 2, _range * 2);
+            var bounds = new Bounds(center, size);
+            var entities = new List<Entity>();
+            _world.GetEntitiesInBounds(typeof(EntityVehicle), bounds, entities);
+
+            var vehicles = new List<EntityVehicle>();
+            foreach (var entity in entities)
+            {
+                var vehicle = entity as EntityVehicle;
+                if (vehicle == null) continue;
+                if (vehicle.GetVehicle() == null || !vehicle.hasStorage()) continue;
+                vehicles.Add(vehicle);
+            }
+
+            // Sort by distance from player
+            vehicles.Sort((a, b) =>
+            {
+                var distA = Vector3.Distance(playerPos, a.position);
+                var distB = Vector3.Distance(playerPos, b.position);
+                return distA.CompareTo(distB);
+            });
+
+            return vehicles;
+        }
+
+        public EntityVehicle FindVehicleById(int entityId)
+        {
+            var vehicles = FindVehiclesInRange();
+            foreach (var v in vehicles)
+            {
+                if (v.entityId == entityId)
+                    return v;
+            }
+            return null;
+        }
+
+        public void ListVehicles()
+        {
+            try
+            {
+                var vehicles = FindVehiclesInRange();
+                if (vehicles.Count == 0)
+                {
+                    MagicSorterMod.Output("[MagicSorter] No vehicles with storage found in range.");
+                    return;
+                }
+
+                MagicSorterMod.Output($"[MagicSorter] Found {vehicles.Count} vehicle(s) with storage:");
+                foreach (var v in vehicles)
+                {
+                    var className = GetVehicleClassName(v);
+                    var slots = v.bag.GetSlots();
+                    var used = slots.Count(s => !s.IsEmpty());
+                    var total = slots.Length;
+                    var pos = v.GetBlockPosition();
+                    MagicSorterMod.Output($"  {className} (ID:{v.entityId}) at {pos} - {used}/{total} slots");
+                }
+            }
+            catch (Exception ex)
+            {
+                MagicSorterMod.Output($"[MagicSorter] Unexpected error: {ex.Message}");
+            }
+        }
+
+        public void SortVehicle(EntityVehicle vehicle)
+        {
+            try
+            {
+                SortVehicleInternal(vehicle);
+            }
+            catch (Exception ex)
+            {
+                MagicSorterMod.Output($"[MagicSorter] Unexpected error: {ex.Message}");
+            }
+        }
+
+        private void SortVehicleInternal(EntityVehicle vehicle)
+        {
+            if (vehicle == null)
+            {
+                MagicSorterMod.Output("[MagicSorter] Vehicle not found.");
+                return;
+            }
+
+            // Find [MagicSort] near the player
+            var nearbyContainers = FindContainersInRange();
+            var sortMeContainer = FindSortMeContainer(nearbyContainers);
+            if (sortMeContainer == null)
+            {
+                MagicSorterMod.Output("[MagicSorter] No [MagicSort] container found in range.");
+                return;
+            }
+
+            // Find [ms:X] destination containers around the [MagicSort] box
+            var containersAroundSortBox = FindContainersAroundPosition(sortMeContainer.Position);
+            var categoryContainers = BuildCategoryMap(containersAroundSortBox, sortMeContainer);
+            if (categoryContainers.Count == 0)
+            {
+                MagicSorterMod.Output("[MagicSorter] No [ms:X] containers found near [MagicSort].");
+                return;
+            }
+
+            // Collect items from vehicle
+            var vehicleSlots = vehicle.bag.GetSlots();
+            var collectedItems = new List<ItemStack>();
+
+            for (var i = 0; i < vehicleSlots.Length; i++)
+            {
+                if (vehicleSlots[i].IsEmpty()) continue;
+                collectedItems.Add(vehicleSlots[i].Clone());
+                vehicleSlots[i] = ItemStack.Empty.Clone();
+            }
+
+            if (collectedItems.Count == 0)
+            {
+                MagicSorterMod.Output("[MagicSorter] Vehicle storage is empty.");
+                return;
+            }
+
+            vehicle.SetBagModified();
+
+            var className = GetVehicleClassName(vehicle);
+            MagicSorterMod.Output($"[MagicSorter] Sorting {collectedItems.Count} item stacks from {className}...");
+
+            // Sort items into containers
+            var unsortedItems = PlaceItemsIntoContainers(collectedItems, categoryContainers);
+
+            // Put unsorted items back: try [MagicSort] first, then back into vehicle
+            if (unsortedItems.Count > 0)
+            {
+                var trulyLostItems = new List<string>();
+                foreach (var itemStack in unsortedItems)
+                {
+                    var itemName = GetItemName(itemStack);
+                    var itemDesc = $"{itemName} x{itemStack.count}";
+                    var placed = false;
+
+                    // Try MagicSort first
+                    if (sortMeContainer != null && TryPlaceItem(sortMeContainer, itemStack, out _))
+                    {
+                        placed = true;
+                    }
+
+                    // Fall back to vehicle bag
+                    if (!placed)
+                    {
+                        for (var i = 0; i < vehicleSlots.Length; i++)
+                        {
+                            if (vehicleSlots[i].IsEmpty())
+                            {
+                                vehicleSlots[i] = itemStack.Clone();
+                                placed = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!placed)
+                        trulyLostItems.Add(itemDesc);
+                }
+
+                if (sortMeContainer != null)
+                    sortMeContainer.SetModified();
+                vehicle.SetBagModified();
+
+                if (trulyLostItems.Count > 0)
+                {
+                    MagicSorterMod.Output(
+                        $"[MagicSorter] WARNING: {trulyLostItems.Count} item(s) could not be placed anywhere!");
+                    foreach (var item in trulyLostItems)
+                        MagicSorterMod.Output($"  LOST: {item}");
+                }
+            }
+
+            // Log summary
+            LogVehicleSortSummary();
+        }
+
+        private void LogVehicleSortSummary()
+        {
+            var totalSorted = _sortedItems.Values.Sum(list => list.Count);
+
+            if (totalSorted == 0 && _failedItems.Count == 0)
+            {
+                MagicSorterMod.Output("[MagicSorter] Nothing was sorted from vehicle");
+                return;
+            }
+
+            if (totalSorted > 0)
+            {
+                MagicSorterMod.Output("[MagicSorter] Vehicle sort complete:");
+                foreach (var kvp in _sortedItems.OrderBy(k => k.Key))
+                {
+                    MagicSorterMod.Output($"  [ms:{kvp.Key}]:");
+                    foreach (var item in kvp.Value)
+                        MagicSorterMod.Output($"    - {item}");
+                }
+            }
+
+            if (_failedItems.Count > 0)
+            {
+                MagicSorterMod.Output("  Returned to vehicle/[MagicSort]:");
+                foreach (var item in _failedItems)
+                    MagicSorterMod.Output($"    - {item}");
+            }
+
+            MagicSorterMod.Output(
+                $"[MagicSorter] Summary: {totalSorted} items sorted, {_failedItems.Count} returned");
+        }
+
         private List<ContainerWrapper> FindContainersInRange()
         {
-            var result = new List<ContainerWrapper>();
-            var playerPos = _player.GetBlockPosition();
+            return FindContainersAroundPosition(_player.GetBlockPosition());
+        }
 
-            // Search in a cube around the player
+        private List<ContainerWrapper> FindContainersAroundPosition(Vector3i center)
+        {
+            var result = new List<ContainerWrapper>();
+
             for (var x = -_range; x <= _range; x++)
             for (var y = -_range; y <= _range; y++)
             for (var z = -_range; z <= _range; z++)
             {
-                var pos = new Vector3i(playerPos.x + x, playerPos.y + y, playerPos.z + z);
+                var pos = new Vector3i(center.x + x, center.y + y, center.z + z);
                 var tileEntity = _world.GetTileEntity(0, pos);
 
                 if (tileEntity is TileEntityLootContainer lootContainer)
@@ -1205,7 +1386,7 @@ namespace MagicSorter
                 }
                 else if (tileEntity is TileEntityComposite composite)
                 {
-                    var name = GetCompositeSignText(composite);
+                    var name = SignTextHelper.GetCompositeSignText(composite);
                     if (!string.IsNullOrEmpty(name)) result.Add(new ContainerWrapper(composite, name, pos));
                 }
             }
@@ -1485,54 +1666,11 @@ namespace MagicSorter
             MagicSorterMod.Output($"[MagicSorter] Summary: {totalSorted} items sorted, {_failedItems.Count} failed");
         }
 
-        private object GetCompositeModule(TileEntityComposite composite, string moduleName)
+        private static string GetVehicleClassName(EntityVehicle vehicle)
         {
-            try
-            {
-                var type = composite.GetType();
-                var modulesField = type.GetField("modulesCustomOrder",
-                    BindingFlags.Public |
-                    BindingFlags.NonPublic |
-                    BindingFlags.Instance);
-
-                if (modulesField != null && modulesField.GetValue(composite) is Array modules)
-                foreach (var module in modules)
-                    if (module?.GetType().Name.Contains(moduleName) == true)
-                        return module;
-            }
-            catch
-            {
-            }
-
-            return null;
-        }
-
-        private string GetCompositeSignText(TileEntityComposite composite)
-        {
-            var signable = GetCompositeModule(composite, "Signable");
-            if (signable == null) return null;
-
-            try
-            {
-                var signTextField = signable.GetType().GetField("signText",
-                    BindingFlags.Public |
-                    BindingFlags.NonPublic |
-                    BindingFlags.Instance);
-
-                var signTextValue = signTextField?.GetValue(signable);
-                if (signTextValue != null)
-                {
-                    // It's AuthoredText, get the Text property
-                    var textProp = signTextValue.GetType().GetProperty("Text");
-                    if (textProp?.GetValue(signTextValue) is string text)
-                        return text;
-                }
-            }
-            catch
-            {
-            }
-
-            return null;
+            if (EntityClass.list.ContainsKey(vehicle.entityClass))
+                return EntityClass.list[vehicle.entityClass].entityClassName;
+            return "Unknown";
         }
     }
 }

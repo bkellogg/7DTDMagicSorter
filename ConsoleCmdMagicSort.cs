@@ -56,23 +56,26 @@ namespace MagicSorter
                     return;
             }
 
-            // Get default range from config
-            var defaultRange = MagicSorterMod.Config?.DefaultRange ?? 20;
-            var range = defaultRange;
-
-            // Parse optional range argument
-            if (args.Count > 1)
-                if (!int.TryParse(args[1], out range) || range <= 0)
-                {
-                    Output("[MagicSorter] Invalid range. Usage: ms <sort|list|plan> [range]");
-                    return;
-                }
-
-            // Get the player who ran the command
+            // All remaining commands need a player
             var player = GetPlayerFromSender(senderInfo);
             if (player == null)
             {
                 Output("[MagicSorter] Could not find player. This command must be run by a player.");
+                return;
+            }
+
+            // "sv" needs special arg parsing (id + optional range), handle separately
+            if (subcommand == "sv" || subcommand == "sortvehicle")
+            {
+                ExecuteSortVehicle(args, player);
+                return;
+            }
+
+            // All other commands take an optional range argument
+            var range = MagicSorterMod.Config?.DefaultRange ?? 20;
+            if (args.Count > 1 && (!int.TryParse(args[1], out range) || range <= 0))
+            {
+                Output("[MagicSorter] Invalid range. Usage: ms <command> [range]");
                 return;
             }
 
@@ -106,6 +109,9 @@ namespace MagicSorter
                     break;
                 case "resort":
                     manager.Resort();
+                    break;
+                case "vehicles":
+                    manager.ListVehicles();
                     break;
                 default:
                     ShowHelp();
@@ -176,6 +182,53 @@ namespace MagicSorter
             }
         }
 
+        private static void ExecuteSortVehicle(List<string> args, EntityPlayer player)
+        {
+            var range = MagicSorterMod.Config?.DefaultRange ?? 20;
+            var vehicleId = -1;
+
+            // Parse: ms sv [id] [range]
+            if (args.Count > 1 && !int.TryParse(args[1], out vehicleId))
+            {
+                Output("[MagicSorter] Invalid vehicle ID. Usage: ms sv <id> [range]");
+                return;
+            }
+            if (args.Count > 2 && (!int.TryParse(args[2], out range) || range <= 0))
+            {
+                Output("[MagicSorter] Invalid range. Usage: ms sv <id> [range]");
+                return;
+            }
+
+            var manager = new ContainerManager(player, range);
+
+            if (vehicleId >= 0)
+            {
+                var vehicle = manager.FindVehicleById(vehicleId);
+                if (vehicle == null)
+                {
+                    Output($"[MagicSorter] No vehicle with ID {vehicleId} found in range.");
+                    return;
+                }
+                manager.SortVehicle(vehicle);
+                return;
+            }
+
+            // No ID specified - auto-sort if exactly 1 vehicle in range
+            var vehicles = manager.FindVehiclesInRange();
+            if (vehicles.Count == 0)
+            {
+                Output("[MagicSorter] No vehicles with storage found in range.");
+            }
+            else if (vehicles.Count == 1)
+            {
+                manager.SortVehicle(vehicles[0]);
+            }
+            else
+            {
+                Output($"[MagicSorter] {vehicles.Count} vehicles found in range. Use 'ms vehicles' to list them, then 'ms sv <id>' to sort a specific one.");
+            }
+        }
+
         private static void ShowHelp()
         {
             var defaultRange = MagicSorterMod.Config?.DefaultRange ?? 20;
@@ -189,6 +242,8 @@ namespace MagicSorter
             Output("  suggest  - Show unsortable items and suggested containers");
             Output("  invalid  - Show containers with invalid/unknown labels");
             Output("  debug    - Show internal item names for mapping");
+            Output("  vehicles - List nearby vehicles with storage");
+            Output("  sv <id>  - Sort items from vehicle into [ms:X] containers");
             Output("  config   - Show current configuration");
             Output("  mappings - Show loaded mappings status");
             Output("  reload   - Reload mappings from disk");

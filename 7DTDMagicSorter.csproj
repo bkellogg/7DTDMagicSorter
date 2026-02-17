@@ -88,6 +88,7 @@
         <Compile Include="Services\MappingLoader.cs"/>
         <Compile Include="Services\PatternMatcher.cs"/>
         <Compile Include="Harmony\BlockActivationPatches.cs"/>
+        <Compile Include="SignTextHelper.cs"/>
     </ItemGroup>
     <ItemGroup>
         <None Include="Config\MagicSorter.xml">
